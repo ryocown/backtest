@@ -240,6 +240,9 @@ class BacktestEngine:
         """Displays all visualizations."""
         if not self.results: return
         
+        # Prevent "More than 20 figures" memory warning
+        plt.close('all')
+        
         self.results.plot(title="Backtest Results")
         
         # Advanced Visualizations need visualization module
@@ -336,9 +339,15 @@ class BacktestEngine:
             # Global Market Sector Correlation
             viz.plot_grouped_correlation_matrix(self.data, market_sector_map, title="Correlation: Global Market Sectors")
             
-            # Valuation Metrics Comparison (Snapshot & Trend)
+            # Historical Trends
             viz.plot_valuation_comparison(self.results, self.metadata)
             viz.plot_historical_pe_trend(self.results, self.fundamental_engine, prices=self.data)
+
+            # --- Entertainment: 3D Robustness Surface ---
+            # We plot this for each strategy to show parameter sensitivity
+            for strat_name in strategies:
+                viz.plot_sharpe_robustness_surface(self.results, strat_name)
+                
         except Exception as e:
             logger.error(f"Advanced viz failed: {e}")
 

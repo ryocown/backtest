@@ -63,6 +63,12 @@ class AnalyticsEngine:
         strat_rets = strat_rets.loc[common_idx]
         bench_rets = bench_rets.loc[common_idx]
         
+        # Ensure we are working with Series for mean() to return scalars
+        if isinstance(strat_rets, pd.DataFrame):
+            strat_rets = strat_rets.iloc[:, 0]
+        if isinstance(bench_rets, pd.DataFrame):
+            bench_rets = bench_rets.iloc[:, 0]
+        
         up_months = bench_rets > 0
         down_months = bench_rets <= 0
         
