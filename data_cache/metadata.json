@@ -1,0 +1,142 @@
+{
+  "AAPL": {
+    "sector": "Technology",
+    "name": "Apple Inc."
+  },
+  "AMAT": {
+    "sector": "Technology",
+    "name": "Applied Materials, Inc."
+  },
+  "AMD": {
+    "sector": "Technology",
+    "name": "Advanced Micro Devices, Inc."
+  },
+  "AMZN": {
+    "sector": "Consumer Cyclical",
+    "name": "Amazon.com, Inc."
+  },
+  "AVGO": {
+    "sector": "Technology",
+    "name": "Broadcom Inc."
+  },
+  "BLK": {
+    "sector": "Financial Services",
+    "name": "BlackRock, Inc."
+  },
+  "BRK.B": {
+    "sector": "Other",
+    "name": "BRK.B"
+  },
+  "BX": {
+    "sector": "Financial Services",
+    "name": "Blackstone Inc."
+  },
+  "CAT": {
+    "sector": "Industrials",
+    "name": "Caterpillar Inc."
+  },
+  "COST": {
+    "sector": "Consumer Defensive",
+    "name": "Costco Wholesale Corporation"
+  },
+  "GE": {
+    "sector": "Industrials",
+    "name": "GE Aerospace"
+  },
+  "GLD": {
+    "sector": "Commodities Focused",
+    "name": "SPDR Gold Shares"
+  },
+  "GOOGL": {
+    "sector": "Communication Services",
+    "name": "Alphabet Inc."
+  },
+  "GS": {
+    "sector": "Financial Services",
+    "name": "The Goldman Sachs Group, Inc."
+  },
+  "JPM": {
+    "sector": "Financial Services",
+    "name": "JPMorgan Chase & Co."
+  },
+  "LIN": {
+    "sector": "Basic Materials",
+    "name": "Linde plc"
+  },
+  "LLY": {
+    "sector": "Healthcare",
+    "name": "Eli Lilly and Company"
+  },
+  "MA": {
+    "sector": "Financial Services",
+    "name": "Mastercard Incorporated"
+  },
+  "META": {
+    "sector": "Communication Services",
+    "name": "Meta Platforms, Inc."
+  },
+  "MS": {
+    "sector": "Financial Services",
+    "name": "Morgan Stanley"
+  },
+  "MSFT": {
+    "sector": "Technology",
+    "name": "Microsoft Corporation"
+  },
+  "NVDA": {
+    "sector": "Technology",
+    "name": "NVIDIA Corporation"
+  },
+  "QCOM": {
+    "sector": "Technology",
+    "name": "QUALCOMM Incorporated"
+  },
+  "QQQ": {
+    "sector": "Large Growth",
+    "name": "Invesco QQQ Trust"
+  },
+  "SGOV": {
+    "sector": "Ultrashort Bond",
+    "name": "iShares 0-3 Month Treasury Bond ETF"
+  },
+  "SPGI": {
+    "sector": "Financial Services",
+    "name": "S&P Global Inc."
+  },
+  "SPY": {
+    "sector": "Large Blend",
+    "name": "SPDR S&P 500 ETF"
+  },
+  "TSLA": {
+    "sector": "Consumer Cyclical",
+    "name": "Tesla, Inc."
+  },
+  "TXN": {
+    "sector": "Technology",
+    "name": "Texas Instruments Incorporated"
+  },
+  "UNH": {
+    "sector": "Healthcare",
+    "name": "UnitedHealth Group Incorporated"
+  },
+  "UNP": {
+    "sector": "Industrials",
+    "name": "Union Pacific Corporation"
+  },
+  "V": {
+    "sector": "Financial Services",
+    "name": "Visa Inc."
+  },
+  "VTI": {
+    "sector": "Large Blend",
+    "name": "Vanguard Total Stock Market Index Fund ETF Shares"
+  },
+  "WMT": {
+    "sector": "Consumer Defensive",
+    "name": "Walmart Inc."
+  },
+  "XOM": {
+    "sector": "Energy",
+    "name": "Exxon Mobil Corporation"
+  }
+}

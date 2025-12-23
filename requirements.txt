@@ -1,0 +1,8 @@
+bt
+pandas
+yfinance
+alpaca-py
+matplotlib
+PyYAML
+numpy
+seaborn

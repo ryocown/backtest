@@ -1,0 +1,31 @@
+settings:
+  start_date: "2020-01-01"
+  end_date: "2025-12-19"
+  benchmarks: ["SPY", "QQQ", "VTI"]
+  risk_free_rate: 0.04
+  rebalance_frequency: "once"  # daily, weekly, monthly, quarterly, yearly, once
+  max_nan_pct: 0.5  # Drop tickers with >50% NaN, forward-fill the rest
+
+portfolio:
+  universe:
+    Semis: [NVDA, AVGO, AMD, AMAT, QCOM, TXN]
+    Tech: [MSFT, AAPL, AMZN, META, GOOGL, TSLA]
+    Financials: [JPM, GS, MS, BLK, BX, V, MA, SPGI]
+    Consumers: [BRK.B, COST, WMT, UNP, CAT, GE]
+    HardAsset: [XOM, LIN]
+    Healthcare: [LLY, UNH]
+  exclusions: [
+    # Haters, I would not have any exposure into these meme-like stocks
+    "ADBE", "COIN", "LULU", "PLTR", "HOOD",
+    # Excluding high div stock due to tax withholding 
+    "KO", "JNJ", "PEP", "ABBV", "CVX" 
+  ]
+  sector_weights:
+    Tech: 0.25
+    Semis: 0.20
+    Financials: 0.10
+    Consumers: 0.10
+    HardAsset: 0.10
+    Healthcare: 0.10
+  fixed_weights: # 20%
+    GLD: 0.15
