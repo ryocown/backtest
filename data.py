@@ -54,6 +54,11 @@ class DataEngine:
         df = pd.DataFrame(all_data).sort_index()
         df = self._ensure_tz_naive(df)
         
+        # Truncate to strictly requested range
+        ts_start = pd.Timestamp(start_date).normalize()
+        ts_end = pd.Timestamp(end_date).normalize()
+        df = df.loc[ts_start:ts_end]
+        
         if fail_on_missing:
             return df, failed_tickers
         return df
@@ -87,12 +92,40 @@ class DataEngine:
         return StockHistoricalDataClient(api_key, secret_key)
 
     def _fetch_bars(self, ticker, start, end):
-        """Fetches daily bars from Alpaca for a single ticker."""
+        """Fetches daily bars for a single ticker, trying Alpaca first, then yfinance."""
+        # Clean start/end for providers
+        start_dt = start if isinstance(start, datetime) else start.to_pydatetime()
+        end_dt = end if isinstance(end, datetime) else end.to_pydatetime()
+        
+        # 1. Try Alpaca
+        logger.debug(f"Trying Alpaca for {ticker}...")
+        try:
+            df = self._fetch_from_alpaca(ticker, start_dt, end_dt)
+            if df is not None and not df.empty:
+                logger.info(f"Successfully fetched {ticker} from Alpaca")
+                return df
+        except Exception as e:
+            logger.warning(f"Alpaca fetch failed for {ticker}: {e}")
+
+        # 2. Fallback to yfinance
+        logger.debug(f"Alpaca failed or no data. Trying yfinance for {ticker}...")
+        try:
+            df = self._fetch_from_yfinance(ticker, start_dt, end_dt)
+            if df is not None and not df.empty:
+                logger.info(f"Successfully fetched {ticker} from yfinance (Fallback)")
+                return df
+        except Exception as e:
+            logger.error(f"yfinance fallback failed for {ticker}: {e}")
+
+        return None
+
+    def _fetch_from_alpaca(self, ticker, start_dt, end_dt):
+        """Internal helper for Alpaca fetching."""
         request = StockBarsRequest(
             symbol_or_symbols=ticker,
             timeframe=TimeFrame.Day,
-            start=start if isinstance(start, datetime) else start.to_pydatetime(),
-            end=(end if isinstance(end, datetime) else end.to_pydatetime()) + pd.Timedelta(days=1),
+            start=start_dt,
+            end=end_dt + pd.Timedelta(days=1),
             adjustment=Adjustment.ALL
         )
         bars = self.client.get_stock_bars(request)
@@ -100,6 +133,23 @@ class DataEngine:
             return None
         
         df = bars.df.xs(ticker, level=0)
+        return self._ensure_tz_naive(df)
+
+    def _fetch_from_yfinance(self, ticker, start_dt, end_dt):
+        """Internal helper for yfinance fetching."""
+        # yfinance uses [start, end) so we add 1 day to end to be inclusive
+        df = yf.download(
+            ticker, 
+            start=start_dt.strftime('%Y-%m-%d'), 
+            end=(end_dt + pd.Timedelta(days=1)).strftime('%Y-%m-%d'),
+            progress=False,
+            auto_adjust=True
+        )
+        if df.empty:
+            return None
+            
+        # Standardize columns to lowercase to match Alpaca ('close', etc.)
+        df.columns = [c.lower() for c in df.columns]
         return self._ensure_tz_naive(df)
 
     # -------------------------------------------------------------------------

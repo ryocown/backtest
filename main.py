@@ -1,5 +1,6 @@
-import sys
+import argparse
 import logging
+from datetime import datetime
 from engine import BacktestEngine
 
 # Configure logging
@@ -13,23 +14,43 @@ logger = logging.getLogger(__name__)
 def main():
     """
     Main entry point for backtesting.
-    Adjust your strategies by modifying the YAML configs or the logic in engine.py.
+    Supports CLI overrides for global settings.
     """
+    parser = argparse.ArgumentParser(description="Institutional Backtester CLI")
+    parser.add_argument('configs', nargs='*', default=['config.yaml'], help="Paths to YAML configuration files")
+    parser.add_argument('--start_date', type=str, default="2020-01-01", help="Backtest start date (YYYY-MM-DD)")
+    parser.add_argument('--end_date', type=str, default=datetime.now().strftime('%Y-%m-%d'), help="Backtest end date (YYYY-MM-DD)")
+    parser.add_argument('--benchmarks', type=str, default="SPY,QQQ,VTI", help="Comma-delimited benchmark tickers")
+    parser.add_argument('--rf', type=float, default=0.04, help="Risk-free rate (e.g., 0.04 for 4%)")
+    parser.add_argument('--no-graph', action='store_true', help="Do not render any graphs")
+    
+    args = parser.parse_args()
+
     # 1. Initialize Engine
     engine = BacktestEngine()
     
-    # 2. Load Configurations (from CLI arguments or default)
-    config_paths = sys.argv[1:] if len(sys.argv) > 1 else ['config.yaml']
-    engine.load_configs(config_paths)
+    # 2. Set Overrides from CLI
+    overrides = {
+        'start_date': datetime.strptime(args.start_date, '%Y-%m-%d'),
+        'end_date': datetime.strptime(args.end_date, '%Y-%m-%d'),
+        'benchmarks': [s.strip() for s in args.benchmarks.split(',') if s.strip()],
+        'rf': args.rf
+    }
+    engine.set_overrides(overrides)
     
-    # 3. Prepare Data (Fetch, Metadata, Clean)
+    # 3. Load Configurations
+    engine.load_configs(args.configs)
+    
+    # 4. Prepare Data (Fetch, Metadata, Clean)
     engine.prepare_data()
     
-    # 4. Run Backtests
+    # 5. Run Backtests
     engine.run_backtests()
     
-    # 5. Plot & Display Results
-    engine.plot_all()
+    # 6. Plot & Display Results
+    engine.display_results()
+    if not args.no_graph:
+        engine.plot_all()
 
 if __name__ == "__main__":
     main()

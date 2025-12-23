@@ -1,95 +1,164 @@
 {
   "AAPL": {
     "sector": "Technology",
-    "name": "Apple Inc."
+    "name": "Apple Inc.",
+    "trailingPE": 36.371815,
+    "forwardPE": 29.629297,
+    "trailingPegRatio": 2.7421
   },
   "AMAT": {
     "sector": "Technology",
-    "name": "Applied Materials, Inc."
+    "name": "Applied Materials, Inc.",
+    "trailingPE": 29.943356,
+    "forwardPE": 22.412827,
+    "trailingPegRatio": 2.245
   },
   "AMD": {
     "sector": "Technology",
-    "name": "Advanced Micro Devices, Inc."
+    "name": "Advanced Micro Devices, Inc.",
+    "trailingPE": 112.53927,
+    "forwardPE": 33.280384,
+    "trailingPegRatio": 0.4769
   },
   "AMZN": {
     "sector": "Consumer Cyclical",
-    "name": "Amazon.com, Inc."
+    "name": "Amazon.com, Inc.",
+    "trailingPE": 32.264122,
+    "forwardPE": 29.117687,
+    "trailingPegRatio": 1.5457
   },
   "AVGO": {
     "sector": "Technology",
-    "name": "Broadcom Inc."
+    "name": "Broadcom Inc.",
+    "trailingPE": 71.43305,
+    "forwardPE": 24.465601,
+    "trailingPegRatio": 0.9569
   },
   "BLK": {
     "sector": "Financial Services",
-    "name": "BlackRock, Inc."
+    "name": "BlackRock, Inc.",
+    "trailingPE": 28.010553,
+    "forwardPE": 20.25285,
+    "trailingPegRatio": 1.9742
   },
   "BRK.B": {
     "sector": "Other",
-    "name": "BRK.B"
+    "name": "BRK.B",
+    "trailingPE": null,
+    "forwardPE": null,
+    "trailingPegRatio": null
   },
   "BX": {
     "sector": "Financial Services",
-    "name": "Blackstone Inc."
+    "name": "Blackstone Inc.",
+    "trailingPE": 44.778736,
+    "forwardPE": 24.235212,
+    "trailingPegRatio": 1.4628
   },
   "CAT": {
     "sector": "Industrials",
-    "name": "Caterpillar Inc."
+    "name": "Caterpillar Inc.",
+    "trailingPE": 29.943956,
+    "forwardPE": 26.064594,
+    "trailingPegRatio": 2.0028
   },
   "COST": {
     "sector": "Consumer Defensive",
-    "name": "Costco Wholesale Corporation"
+    "name": "Costco Wholesale Corporation",
+    "trailingPE": 45.454544,
+    "forwardPE": 38.308823,
+    "trailingPegRatio": 4.7327
   },
   "GE": {
     "sector": "Industrials",
-    "name": "GE Aerospace"
+    "name": "GE Aerospace",
+    "trailingPE": 42.02003,
+    "forwardPE": 43.65708,
+    "trailingPegRatio": 5.7087
   },
   "GLD": {
     "sector": "Commodities Focused",
-    "name": "SPDR Gold Shares"
+    "name": "SPDR Gold Shares",
+    "trailingPE": null,
+    "forwardPE": null,
+    "trailingPegRatio": null
   },
   "GOOGL": {
     "sector": "Communication Services",
-    "name": "Alphabet Inc."
+    "name": "Alphabet Inc.",
+    "trailingPE": 30.580454,
+    "forwardPE": 27.650312,
+    "trailingPegRatio": 1.6435
   },
   "GS": {
     "sector": "Financial Services",
-    "name": "The Goldman Sachs Group, Inc."
+    "name": "The Goldman Sachs Group, Inc.",
+    "trailingPE": 18.246397,
+    "forwardPE": 16.299402,
+    "trailingPegRatio": 1.2761
   },
   "JPM": {
     "sector": "Financial Services",
-    "name": "JPMorgan Chase & Co."
+    "name": "JPMorgan Chase & Co.",
+    "trailingPE": 16.002476,
+    "forwardPE": 15.25339,
+    "trailingPegRatio": 2.769
   },
   "LIN": {
     "sector": "Basic Materials",
-    "name": "Linde plc"
+    "name": "Linde plc",
+    "trailingPE": 28.328428,
+    "forwardPE": 23.743063,
+    "trailingPegRatio": 1.9235
   },
   "LLY": {
     "sector": "Healthcare",
-    "name": "Eli Lilly and Company"
+    "name": "Eli Lilly and Company",
+    "trailingPE": 52.639606,
+    "forwardPE": 33.09155,
+    "trailingPegRatio": 1.0092
   },
   "MA": {
     "sector": "Financial Services",
-    "name": "Mastercard Incorporated"
+    "name": "Mastercard Incorporated",
+    "trailingPE": 36.762455,
+    "forwardPE": 30.132385,
+    "trailingPegRatio": 1.8703
   },
   "META": {
     "sector": "Communication Services",
-    "name": "Meta Platforms, Inc."
+    "name": "Meta Platforms, Inc.",
+    "trailingPE": 29.24403,
+    "forwardPE": 21.938646,
+    "trailingPegRatio": 1.5622
   },
   "MS": {
     "sector": "Financial Services",
-    "name": "Morgan Stanley"
+    "name": "Morgan Stanley",
+    "trailingPE": 18.455853,
+    "forwardPE": 17.072523,
+    "trailingPegRatio": 1.4237
   },
   "MSFT": {
     "sector": "Technology",
-    "name": "Microsoft Corporation"
+    "name": "Microsoft Corporation",
+    "trailingPE": 34.48933,
+    "forwardPE": 25.872915,
+    "trailingPegRatio": 1.9824
   },
   "NVDA": {
     "sector": "Technology",
-    "name": "NVIDIA Corporation"
+    "name": "NVIDIA Corporation",
+    "trailingPE": 45.467823,
+    "forwardPE": 24.430922,
+    "trailingPegRatio": 0.7015
   },
   "QCOM": {
     "sector": "Technology",
-    "name": "QUALCOMM Incorporated"
+    "name": "QUALCOMM Incorporated",
+    "trailingPE": 34.70518,
+    "forwardPE": 14.014355,
+    "trailingPegRatio": 0.5829
   },
   "QQQ": {
     "sector": "Large Growth",
@@ -97,35 +166,59 @@
   },
   "SGOV": {
     "sector": "Ultrashort Bond",
-    "name": "iShares 0-3 Month Treasury Bond ETF"
+    "name": "iShares 0-3 Month Treasury Bond ETF",
+    "trailingPE": null,
+    "forwardPE": null,
+    "trailingPegRatio": null
   },
   "SPGI": {
     "sector": "Financial Services",
-    "name": "S&P Global Inc."
+    "name": "S&P Global Inc.",
+    "trailingPE": 38.011658,
+    "forwardPE": 26.318777,
+    "trailingPegRatio": 1.6837
   },
   "SPY": {
     "sector": "Large Blend",
-    "name": "SPDR S&P 500 ETF"
+    "name": "SPDR S&P 500 ETF",
+    "trailingPE": 27.621477,
+    "forwardPE": null,
+    "trailingPegRatio": null
   },
   "TSLA": {
     "sector": "Consumer Cyclical",
-    "name": "Tesla, Inc."
+    "name": "Tesla, Inc.",
+    "trailingPE": 332.4694,
+    "forwardPE": 219.29027,
+    "trailingPegRatio": 9.7622
   },
   "TXN": {
     "sector": "Technology",
-    "name": "Texas Instruments Incorporated"
+    "name": "Texas Instruments Incorporated",
+    "trailingPE": 32.571953,
+    "forwardPE": 28.970528,
+    "trailingPegRatio": 1.5442
   },
   "UNH": {
     "sector": "Healthcare",
-    "name": "UnitedHealth Group Incorporated"
+    "name": "UnitedHealth Group Incorporated",
+    "trailingPE": 16.953075,
+    "forwardPE": 18.30084,
+    "trailingPegRatio": 1.2371
   },
   "UNP": {
     "sector": "Industrials",
-    "name": "Union Pacific Corporation"
+    "name": "Union Pacific Corporation",
+    "trailingPE": 19.91596,
+    "forwardPE": 18.518387,
+    "trailingPegRatio": 2.6684
   },
   "V": {
     "sector": "Financial Services",
-    "name": "Visa Inc."
+    "name": "Visa Inc.",
+    "trailingPE": 34.484818,
+    "forwardPE": 24.405087,
+    "trailingPegRatio": 1.9356
   },
   "VTI": {
     "sector": "Large Blend",
@@ -133,10 +226,31 @@
   },
   "WMT": {
     "sector": "Consumer Defensive",
-    "name": "Walmart Inc."
+    "name": "Walmart Inc.",
+    "trailingPE": 39.370632,
+    "forwardPE": 37.80566,
+    "trailingPegRatio": 4.0928
   },
   "XOM": {
     "sector": "Energy",
-    "name": "Exxon Mobil Corporation"
+    "name": "Exxon Mobil Corporation",
+    "trailingPE": 17.172966,
+    "forwardPE": 16.443409,
+    "trailingPegRatio": 2.7772
+  },
+  "KRBN": {
+    "sector": "Commodities Focused",
+    "name": "KraneShares Global Carbon ETF"
+  },
+  "XLG": {
+    "sector": "Large Blend",
+    "name": "Invesco S&P 500 Top 50 ETF"
+  },
+  "qqq": {
+    "sector": "Large Growth",
+    "name": "Invesco QQQ Trust",
+    "trailingPE": 34.092583,
+    "forwardPE": null,
+    "trailingPegRatio": null
   }
 }

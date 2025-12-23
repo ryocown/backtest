@@ -6,3 +6,4 @@ matplotlib
 PyYAML
 numpy
 seaborn
+simfin
