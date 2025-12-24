@@ -93,6 +93,10 @@ portfolio:
 
 ## Data Visualization
 
+> **NOTE**
+>
+> Graphs work on Mac. Very janky on Linux Gnome with PyQt5. Haven't tested it on Windows.
+
 ![Everything](screenshots/everything.png)
 ![Heatmap](screenshots/heatmap.png)
 
