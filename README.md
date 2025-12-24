@@ -53,12 +53,13 @@ A powerful, Python-based backtesting engine designed for institutional-grade fin
    export ALPACA_API_KEY='your_alpaca_key'
    export ALPACA_SECRET_KEY='your_alpaca_secret'
    ```
+   Note that you don't really need the APIs as long as they are covered in the datasets. I've pushed the datasets that I'm using in the backtesting so you can just run that as an demo.
 
 ## Usage
 
 Run a backtest using a configuration file:
 ```bash
-python main.py 30_quarterly_rebalance.yaml --start_date "2020-01-01" --benchmarks SPY,QQQ
+python main.py portfolios/30_quarterly_rebalance.yaml --start_date "2020-01-01" --benchmarks SPY,QQQ
 ```
 
 ### CLI Arguments
