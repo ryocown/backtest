@@ -2,6 +2,8 @@
 
 A powerful, Python-based backtesting engine designed for institutional-grade financial analysis. This tool allows for multi-strategy backtesting, risk attribution, and advanced visualizations, including 3D parameter robustness surfaces and interactive financial charts.
 
+This started off as I'm impressed by Gemini 3's analytical ability in the financial markets. I fired my financial advisor and started self-directing my own portfolio. I'm generally unhappy with how VOO/SPY and QQQ/QQQM all contain crappy companies (CVNA/PLTR in SPY, and LULU/COIN/HOOD in QQQ) so here is my attempt at direct indexing while being able to reason my decision.
+
 ## Key Features
 
 ### 🚀 Core Engine
