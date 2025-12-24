@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import matplotlib.text as mtext
+import matplotlib.dates as mdates
 from analytics import AnalyticsEngine
 from mpl_toolkits.mplot3d import Axes3D # Required for 3D projection
 
@@ -22,7 +23,12 @@ def add_financial_cursor(fig=None):
     if fig is None:
         fig = plt.gcf()
     
-    return FinancialCursor(fig)
+    # Ensure the cursor is persisted by attaching it to the figure
+    if not hasattr(fig, '_financial_cursor'):
+        fig._financial_cursor = FinancialCursor(fig)
+        # print(f"DEBUG: Attached FinancialCursor to figure {id(fig)}")
+    
+    return fig._financial_cursor
 
 class FinancialCursor:
     def __init__(self, fig):
@@ -86,11 +92,17 @@ class FinancialCursor:
                 lx, ly = line.get_data()
                 if len(lx) == 0: continue
                 
+                # Ensure lx is numeric for comparison with target_x (which is usually float days)
+                try:
+                    lx_numeric = mdates.date2num(lx)
+                except:
+                    lx_numeric = lx
+
                 # Find index of closest x
-                idx = np.searchsorted(lx, target_x)
-                if idx >= len(lx): idx = len(lx) - 1
+                idx = np.searchsorted(lx_numeric, target_x)
+                if idx >= len(lx_numeric): idx = len(lx_numeric) - 1
                 
-                if abs(lx[idx] - target_x) < 5: # Threshold for visibility
+                if abs(lx_numeric[idx] - target_x) < 5: # Threshold for visibility
                     val = ly[idx]
                     label = line.get_label()
                     summary_text += f"{label[:10]}: {val:.2f}\n"
@@ -196,6 +208,16 @@ def plot_monthly_returns_heatmap(res, strategy_name):
     # Use month names
     import calendar
     pivot_df.columns = [calendar.month_name[m] for m in pivot_df.columns]
+    
+    # Calculate yearly total (compounded)
+    pivot_df['Total'] = pivot_df.apply(lambda row: (1 + row.dropna()).prod() - 1, axis=1)
+    
+    # Calculate monthly average
+    avg_row = pivot_df.mean(axis=0)
+    avg_row.name = 'Average'
+    
+    # Add Average row to the top
+    pivot_df = pd.concat([pd.DataFrame([avg_row]), pivot_df])
     
     plt.figure(figsize=(12, 8))
     if HAS_SEABORN and sns is not None:
@@ -530,21 +552,27 @@ def plot_sharpe_robustness_surface(res, strategy_name, min_window=20, max_window
     Z = df_sharpe.values.T # Shape (len(windows), len(dates))
 
     # Create a figure with two subplots: 3D Surface and 2D Heatmap
-    fig = plt.figure(figsize=(16, 8))
+    fig = plt.figure(figsize=(18, 9))
     
     # Subplot 1: 3D Surface (The "WOW" factor)
     ax1 = fig.add_subplot(121, projection='3d')
-    surf = ax1.plot_surface(X, Y, Z, cmap='RdYlGn', edgecolor='none', alpha=0.9, antialiased=True)
+    
+    # Add lighting for better depth perception
+    from matplotlib.colors import LightSource
+    ls = LightSource(270, 45)
+    # Compute shaded colors
+    rgb = ls.shade(Z, cmap=plt.get_cmap('viridis'), vert_exag=0.1, blend_mode='soft')
+    surf = ax1.plot_surface(X, Y, Z, facecolors=rgb, edgecolor='none', alpha=0.8, antialiased=True, shade=False)
     
     # Add a color bar
     fig.colorbar(surf, ax=ax1, shrink=0.5, aspect=10, label='Annualized Sharpe Ratio')
     
     # Labeling 3D
-    ax1.set_title(f"3D Robustness Terrain: {strategy_name}", fontsize=12)
-    ax1.set_xlabel("Time (Weeks)", labelpad=10)
-    ax1.set_ylabel("Lookback Window (Days)", labelpad=10)
-    ax1.set_zlabel("Sharpe Ratio", labelpad=10)
-    ax1.view_init(elev=35, azim=-60)
+    ax1.set_title(f"3D Robustness Terrain: {strategy_name}", fontsize=14, fontweight='bold')
+    ax1.set_xlabel("Time (Weeks)", labelpad=12, fontsize=10)
+    ax1.set_ylabel("Lookback Window (Days)", labelpad=12, fontsize=10)
+    ax1.set_zlabel("Sharpe Ratio", labelpad=12, fontsize=10)
+    ax1.view_init(elev=30, azim=-60)
     
     # Subplot 2: 2D Sensitivity Map (The "Human Brain" factor)
     # This is what professionals actually use to find "Parameter Plateaus"
@@ -553,13 +581,15 @@ def plot_sharpe_robustness_surface(res, strategy_name, min_window=20, max_window
     if HAS_SEABORN and sns is not None:
         # We use every 4th date for x-labels to avoid crowding
         sns.heatmap(df_sharpe.T, cmap='RdYlGn', ax=ax2, center=1.0, 
+                    annot=False, # Too crowded for annotation
                     cbar_kws={'label': 'Sharpe Ratio'},
                     xticklabels=12, yticklabels=1) # Approx quarterly labels
         
         # Cleanup x-axis labels to show real dates
         locs = ax2.get_xticks()
         labels = [df_sharpe.index[int(i)].strftime('%Y-%m') for i in locs if i < len(df_sharpe)]
-        ax2.set_xticklabels(labels, rotation=45, ha='right')
+        ax2.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
+        ax2.set_yticklabels(ax2.get_yticklabels(), fontsize=9)
     else:
         im = ax2.imshow(Z, cmap='RdYlGn', aspect='auto', origin='lower')
         plt.colorbar(im, ax=ax2, label='Sharpe Ratio')
@@ -677,3 +707,95 @@ def plot_valuation_comparison(res, metadata, title="Portfolio Valuation Metrics"
         make_legend_interactive()
     except Exception as e:
         print(f"Valuation comparison plot failed: {e}")
+
+def plot_drawdown_recovery_surface(res, strategy_name, title="Drawdown-Recovery Surface"):
+    """
+    Plots a 3D surface showing the relationship between Drawdown Magnitude, 
+    Duration, and the Required Recovery Return.
+    
+    X-axis: Magnitude of Drawdown (%)
+    Y-axis: Duration of the event (Months)
+    Z-axis: Required Recovery Return (+%)
+    
+    This visualization highlights the 'Asymmetry of Loss'.
+    """
+    if strategy_name not in res.prices.columns:
+        return
+
+    prices = res.prices[strategy_name]
+    
+    # 1. Calculate Drawdowns
+    # We need to find peak-to-recovery periods
+    cummax = prices.cummax()
+    drawdown = (prices / cummax) - 1.0
+    
+    # Identify drawdown events
+    is_in_drawdown = drawdown < 0
+    # Find transitions - using infer_objects to avoid future warnings
+    starts = (is_in_drawdown & (~is_in_drawdown.shift(1).fillna(False))).infer_objects(copy=False)
+    ends = ((~is_in_drawdown) & is_in_drawdown.shift(1).fillna(False)).infer_objects(copy=False)
+    
+    start_dates = prices.index[starts]
+    end_dates = prices.index[ends]
+    
+    # Align starts and ends
+    events = []
+    for s in start_dates:
+        # Find the first end after this start
+        future_ends = end_dates[end_dates > s]
+        if not future_ends.empty:
+            e = future_ends[0]
+            period_prices = prices[s:e]
+            mag = (period_prices.min() / period_prices.iloc[0]) - 1.0
+            duration_months = (e - s).days / 30.44
+            required_recovery = (1.0 / (1.0 + mag)) - 1.0
+            
+            events.append({
+                'magnitude': abs(mag) * 100,
+                'duration': duration_months,
+                'recovery': required_recovery * 100
+            })
+    
+    if not events:
+        print(f"No completed drawdown events found for {strategy_name}")
+        return
+
+    df_events = pd.DataFrame(events)
+    
+    # 2. Create Theoretical Surface
+    # X: Magnitude 0 to 60% (common range) or max observed
+    max_mag = max(df_events['magnitude'].max(), 50)
+    max_dur = max(df_events['duration'].max(), 12)
+    
+    x_surf = np.linspace(0, min(max_mag * 1.2, 90), 50)
+    y_surf = np.linspace(0, max_dur * 1.2, 50)
+    X_surf, Y_surf = np.meshgrid(x_surf, y_surf)
+    # Z is purely a function of X: Recovery = 1/(1-X) - 1
+    Z_surf = (100.0 / (100.0 - X_surf)) * 100.0 - 100.0
+    
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Add lighting for better depth perception
+    from matplotlib.colors import LightSource
+    ls = LightSource(270, 45)
+    rgb = ls.shade(Z_surf, cmap=plt.get_cmap('OrRd'), vert_exag=0.1, blend_mode='soft')
+    
+    # Plot Surface
+    surf = ax.plot_surface(X_surf, Y_surf, Z_surf, facecolors=rgb, alpha=0.5, antialiased=True, shade=False)
+    
+    # Plot Historical Events
+    ax.scatter(df_events['magnitude'], df_events['duration'], df_events['recovery'], 
+               color='blue', s=50, edgecolors='white', label='Historical Drawdowns')
+    
+    # Labeling
+    ax.set_title(f"{title}: {strategy_name}", fontsize=14)
+    ax.set_xlabel("Magnitude of Drawdown (%)")
+    ax.set_ylabel("Duration to Recovery (Months)")
+    ax.set_zlabel("Required Recovery Return (%)")
+    
+    # Add colorbar for the surface
+    fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label='Theoretical Recovery Required')
+    
+    ax.view_init(elev=20, azim=-45)
+    plt.tight_layout()

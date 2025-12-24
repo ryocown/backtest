@@ -5,7 +5,7 @@ settings:
 
 portfolio:
   universe:
-    Semis: [NVDA, AVGO, AMD, AMAT, QCOM, TXN]
+    Semis: [NVDA, AVGO, AMAT, QCOM, TXN]
     Tech: [MSFT, AAPL, AMZN, META, GOOGL, TSLA]
     Financials: [JPM, GS, MS, BLK, BX, V, MA, SPGI]
     Consumers: [BRK.B, COST, WMT, UNP, CAT, GE]

@@ -7,3 +7,6 @@ PyYAML
 numpy
 seaborn
 simfin
+PyQt5
+jupyter
+ipympl
