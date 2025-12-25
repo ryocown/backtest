@@ -213,7 +213,10 @@ class DataEngine:
             return None
             
         # Standardize columns to lowercase to match Alpaca ('close', etc.)
-        df.columns = [c.lower() for c in df.columns]
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [str(c[0]).lower() for c in df.columns]
+        else:
+            df.columns = [str(c).lower() for c in df.columns]
         return self._ensure_tz_naive(df)
 
     # -------------------------------------------------------------------------

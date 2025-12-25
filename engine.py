@@ -2,14 +2,84 @@ import bt
 import yaml
 import os
 import logging
+import concurrent.futures
+from functools import partial
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from data import DataEngine
 from fundamentals import FundamentalEngine
 from analytics import AnalyticsEngine
+import visualization as viz
 
 logger = logging.getLogger(__name__)
+
+def _precompute_tda_worker(current_date, full_df, window_months):
+    """Worker function for parallel TDA precomputation."""
+    import warnings
+    warnings.simplefilter(action='ignore', category=FutureWarning)
+    from tda_engine import TDAManager
+    import numpy as np
+    import pandas as pd
+    
+    tda_manager = TDAManager(window_months=window_months)
+    window_start = current_date - pd.DateOffset(months=window_months)
+    sub_df = full_df.loc[window_start:current_date]
+
+    if sub_df.empty or len(sub_df) < 20:
+        return None
+
+    corr_matrix = sub_df.corr()
+    dist_matrix = tda_manager.correlation_to_distance(corr_matrix)
+    coords = tda_manager.get_3d_projection(dist_matrix)
+    dgms = tda_manager.compute_persistence(dist_matrix)
+    betti = tda_manager.calculate_betti_numbers(dgms, threshold=0.5)
+    chi = tda_manager.calculate_euler_characteristic(betti)
+    avg_corr = corr_matrix.values[np.triu_indices(len(corr_matrix), k=1)].mean()
+
+    return {
+        'date': current_date,
+        'corr': corr_matrix,
+        'dist': dist_matrix,
+        'coords': coords,
+        'dgms': dgms,
+        'betti': betti,
+        'chi': chi,
+        'avg_corr': avg_corr
+    }
+
+def _run_tda_explorer_worker(available_dates, precomputed_results, spy_ohlc):
+    """Launches TDA Explorer in a subprocess."""
+    import matplotlib.pyplot as plt
+    from interactive_tda import TDAExplorer
+    try:
+        explorer = TDAExplorer(available_dates, precomputed_results, spy_ohlc)
+        explorer.show()
+    except Exception as e:
+        print(f"TDA Explorer failed in subprocess: {e}")
+
+def run_plot_process(task):
+    """Worker function for parallel plotting."""
+    func_obj, args, kwargs = task
+    import matplotlib.pyplot as plt
+    import visualization as viz
+    try:
+        if isinstance(func_obj, tuple) and len(func_obj) == 2:
+            obj, method_name = func_obj
+            getattr(obj, method_name)(*args, **kwargs)
+        else:
+            func_obj(*args, **kwargs)
+        
+        # Ensure legends are interactive even in subprocesses
+        try:
+            viz.make_legend_interactive(plt.gcf())
+        except:
+            pass
+        plt.show() 
+    except Exception as e:
+        import traceback
+        print(f"Plotting failed in subprocess: {e}")
+        traceback.print_exc()
 
 class BacktestEngine:
     def __init__(self):
@@ -298,30 +368,29 @@ class BacktestEngine:
             logger.error(f"GUI failed: {e}. Rendering all graphs.")
             selection = None
 
+        # --- Parallel Plot Dispatcher ---
+        plot_tasks = []
+
+        def add_task(func, *args, **kwargs):
+            plot_tasks.append((func, args, kwargs))
+
         def is_selected(category, entity, plot):
             if not selection: return True
             if category == 'global':
                 return selection['global'].get(plot, True)
             return selection['per_entity'].get(entity, {}).get(plot, True)
 
-        # 1. Global Plots
-        if is_selected('global', None, "Equity Curve"):
-            self.results.plot(title="Backtest Results")
-        
-        # Advanced Visualizations need visualization module
-        try:
-            import visualization as viz
-            viz.make_legend_interactive(plt.gcf())
-        except ImportError:
-            viz = None
+        if is_selected('global', None, "Equity Curve"): 
+            # self.results.plot is a bound method, pass as tuple (obj, "method")
+            add_task((self.results, "plot"), title="Backtest Results")
         
         if viz:
-            if is_selected('global', None, "Drawdowns"): viz.plot_drawdowns(self.results)
-            if is_selected('global', None, "Rolling Volatility"): viz.plot_rolling_volatility(self.results)
-            if is_selected('global', None, "Rolling Sharpe"): viz.plot_rolling_sharpe(self.results)
-            if is_selected('global', None, "Rolling Sortino"): viz.plot_rolling_sortino(self.results)
-            if is_selected('global', None, "Return Distribution"): viz.plot_return_distribution(self.results)
-            if is_selected('global', None, "Correlation Matrix"): viz.plot_correlation_matrix(self.results)
+            if is_selected('global', None, "Drawdowns"): add_task(viz.plot_drawdowns, self.results)
+            if is_selected('global', None, "Rolling Volatility"): add_task(viz.plot_rolling_volatility, self.results)
+            if is_selected('global', None, "Rolling Sharpe"): add_task(viz.plot_rolling_sharpe, self.results)
+            if is_selected('global', None, "Rolling Sortino"): add_task(viz.plot_rolling_sortino, self.results)
+            if is_selected('global', None, "Return Distribution"): add_task(viz.plot_return_distribution, self.results)
+            if is_selected('global', None, "Correlation Matrix"): add_task(viz.plot_correlation_matrix, self.results)
             
             # Primary benchmark selection: 
             primary_benchmark = self.configs[0]['settings'].get('primary_benchmark')
@@ -331,12 +400,12 @@ class BacktestEngine:
                 else: primary_benchmark = 'SPY'
 
             if is_selected('global', None, "Upside/Downside Capture"):
-                viz.plot_upside_downside_capture(self.results, benchmark=primary_benchmark)
+                add_task(viz.plot_upside_downside_capture, self.results, benchmark=primary_benchmark)
             if is_selected('global', None, "Rolling Info Ratio"):
-                viz.plot_rolling_info_ratio(self.results, benchmark=primary_benchmark)
+                add_task(viz.plot_rolling_info_ratio, self.results, benchmark=primary_benchmark)
             
             if is_selected('global', None, "Rolling Alpha/Beta"):
-                viz.plot_rolling_alpha_beta(
+                add_task(viz.plot_rolling_alpha_beta,
                     self.results.prices[[cfg['_name'] for cfg in self.configs]], 
                     self.results.prices[[primary_benchmark]],
                     title_prefix="Strategies vs " + primary_benchmark
@@ -347,7 +416,7 @@ class BacktestEngine:
             for name in all_entities:
                 if name in self.results.prices.columns:
                     if is_selected('per_entity', name, "Heatmap"):
-                        viz.plot_monthly_returns_heatmap(self.results, name)
+                        add_task(viz.plot_monthly_returns_heatmap, self.results, name)
             
             # Prepare global market sector map for correlation
             assert self.data is not None
@@ -363,12 +432,12 @@ class BacktestEngine:
                         if fw not in user_class_map: user_class_map[fw] = fw
 
                     if is_selected('per_entity', name, "Risk (User Class)"):
-                        viz.plot_risk_contribution(self.results, name, prices=self.data, group_map=user_class_map, title=f"Risk: User Asset Class ({name})")
+                        add_task(viz.plot_risk_contribution, self.results, name, prices=self.data, group_map=user_class_map, title=f"Risk: User Asset Class ({name})")
                     if is_selected('per_entity', name, "Correlation (User Class)"):
-                        viz.plot_grouped_correlation_matrix(self.data, user_class_map, title=f"Correlation: User Asset Class ({name})")
+                        add_task(viz.plot_grouped_correlation_matrix, self.data, user_class_map, title=f"Correlation: User Asset Class ({name})")
                     
                     if is_selected('per_entity', name, "Performance Attribution") and '_target_weights' in cfg:
-                         viz.plot_return_attribution(
+                         add_task(viz.plot_return_attribution,
                              self.data[list(cfg['_target_weights'].keys())], 
                              cfg['_target_weights'],
                              group_map=user_class_map,
@@ -376,33 +445,41 @@ class BacktestEngine:
                          )
                     
                     if is_selected('per_entity', name, "Risk (Market Sector)"):
-                        viz.plot_risk_contribution(self.results, name, prices=self.data, group_map=market_sector_map, title=f"Risk: Market Sectors ({name})")
+                        add_task(viz.plot_risk_contribution, self.results, name, prices=self.data, group_map=market_sector_map, title=f"Risk: Market Sectors ({name})")
                     
                     if is_selected('per_entity', name, "Sharpe Robustness"):
-                        viz.plot_sharpe_robustness_surface(self.results, name)
+                        add_task(viz.plot_sharpe_robustness_surface, self.results, name)
                     if is_selected('per_entity', name, "Drawdown-Recovery"):
-                        viz.plot_drawdown_recovery_surface(self.results, name)
+                        add_task(viz.plot_drawdown_recovery_surface, self.results, name)
                     if is_selected('per_entity', name, "Sectoral Allocation"):
-                        self._plot_sectoral_allocation(name, cfg.get('_custom_sector_map'))
+                        # self._plot_sectoral_allocation is a bound method, pass as tuple
+                        add_task((self, "_plot_sectoral_allocation"), name, cfg.get('_custom_sector_map'))
 
             if is_selected('global', None, "Global Sector Correlation"):
-                viz.plot_grouped_correlation_matrix(self.data, market_sector_map, title="Correlation: Global Market Sectors")
+                add_task(viz.plot_grouped_correlation_matrix, self.data, market_sector_map, title="Correlation: Global Market Sectors")
             
             if is_selected('global', None, "Valuation Comparison"):
-                viz.plot_valuation_comparison(self.results, self.metadata)
+                add_task(viz.plot_valuation_comparison, self.results, self.metadata)
             if is_selected('global', None, "Historical P/E Trend"):
-                viz.plot_historical_pe_trend(self.results, self.fundamental_engine, prices=self.data)
-        
-        # --- Launch TDA Explorer if selected ---
+                add_task(viz.plot_historical_pe_trend, self.results, self.fundamental_engine, prices=self.data)
+
+        # --- Launch TDA Explorer in parallel if selected ---
         if selection and selection.get('tda', {}).get('enabled'):
             tda_cfg = selection['tda']
-            self.run_tda_explorer(
-                start_date=tda_cfg['start'],
-                end_date=tda_cfg['end'],
+            logger.info("Precomputing TDA results for interactive explorer...")
+            tda_results, dates, spy_ohlc = self.get_tda_results(
+                start_date=tda_cfg['start'], 
+                end_date=tda_cfg['end'], 
                 window_months=tda_cfg['window']
             )
-
-        plt.show()
+            if tda_results:
+                add_task(_run_tda_explorer_worker, dates, tda_results, spy_ohlc)
+        
+        # --- Launch Parallel Plotting ---
+        logger.info(f"Launching {len(plot_tasks)} visualization processes...")
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # Wrap in list() to block until all windows are closed AND catch errors
+            list(executor.map(run_plot_process, plot_tasks))
 
     def _plot_sectoral_allocation(self, strategy_name, custom_sector_map):
         assert self.results is not None, "Results is None when plotting sectoral allocation. This should never happen."
@@ -449,7 +526,16 @@ class BacktestEngine:
 
         logger.info(f"Loading data for {len(tickers)} tickers for TDA...")
         df = self.data_engine.get_historical_data(tickers, data_start, end_date.strftime('%Y-%m-%d'))
-        df = df.dropna(axis=1)
+        
+        # Robustness: fill minor gaps before dropping.
+        # This prevents dropping tickers that miss just one or two days in the lookback window.
+        df = df.ffill().bfill().dropna(axis=1)
+        
+        if df.empty or len(df.columns) < 2:
+            logger.warning("Not enough tickers with sufficient data for TDA analysis.")
+            return [], None, None
+            
+        logger.info(f"TDA Analysis starting with {len(df.columns)} tickers.")
 
         available_dates = df.index[(df.index >= start_date) & (df.index <= end_date)]
         if len(available_dates) == 0:
@@ -458,42 +544,18 @@ class BacktestEngine:
 
         # 3. Fetch SPY OHLC
         spy_start = (start_date - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
-        spy_end = (end_date + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
+        # Cap end date to today to avoid "future data" fetch errors
+        now_str = datetime.now().strftime('%Y-%m-%d')
+        spy_end = min((end_date + pd.Timedelta(days=10)).strftime('%Y-%m-%d'), now_str)
         spy_ohlc = self.data_engine.get_ticker_ohlc('SPY', spy_start, spy_end)
 
-        # 4. Precomputation
-        tda_manager = TDAManager(window_months=window_months)
-        precomputed_results = []
-
-        logger.info(f"Precomputing TDA for {len(available_dates)} days...")
-        for i, current_date in enumerate(available_dates):
-            window_start = current_date - pd.DateOffset(months=window_months)
-            sub_df = df.loc[window_start:current_date]
-
-            if sub_df.empty or len(sub_df) < 20:
-                precomputed_results.append(None)
-                continue
-
-            corr_matrix = sub_df.corr()
-            dist_matrix = tda_manager.correlation_to_distance(corr_matrix)
-            coords = tda_manager.get_3d_projection(dist_matrix)
-            dgms = tda_manager.compute_persistence(dist_matrix)
-            betti = tda_manager.calculate_betti_numbers(dgms, threshold=0.5)
-            chi = tda_manager.calculate_euler_characteristic(betti)
-            avg_corr = corr_matrix.values[np.triu_indices(len(corr_matrix), k=1)].mean()
-
-            precomputed_results.append({
-                'date': current_date,
-                'corr': corr_matrix,
-                'dist': dist_matrix,
-                'coords': coords,
-                'dgms': dgms,
-                'betti': betti,
-                'chi': chi,
-                'avg_corr': avg_corr
-            })
-            if (i+1) % 5 == 0 or i == len(available_dates)-1:
-                print(f"TDA Progress: {i+1}/{len(available_dates)}", end="\r")
+        # 4. Parallel Precomputation
+        logger.info(f"Precomputing TDA for {len(available_dates)} days in parallel...")
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            precomputed_results = list(executor.map(
+                partial(_precompute_tda_worker, full_df=df, window_months=window_months), 
+                available_dates
+            ))
         print("\nPrecomputation complete.")
         return precomputed_results, available_dates, spy_ohlc
 

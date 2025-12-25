@@ -96,7 +96,7 @@ class WebExporter:
                         # Sector grouped returns
                         if s_map:
                             # Map ticker -> sector for attribution columns
-                            sector_attr = attr.rename(columns=s_map).groupby(level=0, axis=1).sum()
+                            sector_attr = attr.rename(columns=s_map).T.groupby(level=0).sum().T
                             sector_returns[col] = sector_attr.reset_index().to_dict(orient='records')
                             
                             # Sector grouped risk
@@ -139,8 +139,10 @@ class WebExporter:
         drawdown = (prices / cummax) - 1.0
         
         is_in_drawdown = drawdown < 0
-        starts = (is_in_drawdown & (~is_in_drawdown.shift(1).fillna(False))).infer_objects(copy=False)
-        ends = ((~is_in_drawdown) & is_in_drawdown.shift(1).fillna(False)).infer_objects(copy=False)
+        # Use infer_objects(copy=False) and ensure types are consistent to avoid FutureWarnings
+        is_in_drawdown_shifted = is_in_drawdown.shift(1).fillna(False).astype(bool)
+        starts = (is_in_drawdown & (~is_in_drawdown_shifted))
+        ends = ((~is_in_drawdown) & is_in_drawdown_shifted)
         
         start_dates = prices.index[starts]
         end_dates = prices.index[ends]

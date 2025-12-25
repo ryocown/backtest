@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.text as mtext
 import matplotlib.dates as mdates
+import concurrent.futures
+from functools import partial
 from analytics import AnalyticsEngine
 from mpl_toolkits.mplot3d import Axes3D # Required for 3D projection
 
@@ -537,12 +539,13 @@ def plot_sharpe_robustness_surface(res, strategy_name, min_window=20, max_window
     prices = res.prices[strategy_name]
     windows = np.arange(min_window, max_window + 1, step)
     
-    # Calculate Sharpe for each window
-    # We'll use AnalyticsEngine.get_rolling_sharpe
-    all_sharpes = []
-    for w in windows:
-        s = AnalyticsEngine.get_rolling_sharpe(prices.to_frame(), window=int(w)).iloc[:, 0]
-        all_sharpes.append(s)
+    # Calculate Sharpe for each window in parallel
+    def _calc_single_sharpe(w, pr):
+        return AnalyticsEngine.get_rolling_sharpe(pr.to_frame(), window=int(w)).iloc[:, 0]
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # Passing prices to each worker. On Linux this is fork-safe and efficient.
+        all_sharpes = list(executor.map(partial(_calc_single_sharpe, pr=prices), windows))
     
     # Create DataFrame to align all rolling windows
     df_sharpe_raw = pd.concat(all_sharpes, axis=1, keys=windows)
@@ -752,21 +755,28 @@ def plot_drawdown_recovery_surface(res, strategy_name, title="Drawdown-Recovery 
     
     # Align starts and ends
     events = []
-    for s in start_dates:
+    def _calc_drawdown_event(s, pr_series, end_dates_list):
         # Find the first end after this start
-        future_ends = end_dates[end_dates > s]
+        future_ends = end_dates_list[end_dates_list > s]
         if not future_ends.empty:
             e = future_ends[0]
-            period_prices = prices[s:e]
+            period_prices = pr_series[s:e]
             mag = (period_prices.min() / period_prices.iloc[0]) - 1.0
             duration_months = (e - s).days / 30.44
             required_recovery = (1.0 / (1.0 + mag)) - 1.0
             
-            events.append({
+            return {
                 'magnitude': abs(mag) * 100,
                 'duration': duration_months,
                 'recovery': required_recovery * 100
-            })
+            }
+        return None
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        calc_func = partial(_calc_drawdown_event, pr_series=prices, end_dates_list=end_dates)
+        raw_events = list(executor.map(calc_func, start_dates))
+    
+    events = [e for e in raw_events if e is not None]
     
     if not events:
         print(f"No completed drawdown events found for {strategy_name}")
