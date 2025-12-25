@@ -1,0 +1,26 @@
+<div class="heatmap-container">
+  <h3>{{title}}</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th *ngFor="let m of monthNames">{{m}}</th>
+          <th class="total-col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let year of years">
+          <td class="year-label">{{year}}</td>
+          <td *ngFor="let m of months" [style.background-color]="getColor(getReturn(year, m))"
+            [title]="getReturn(year, m) | percent:'1.2-2'">
+            {{ getReturn(year, m) ? (getReturn(year, m) | percent:'1.1-1') : '-' }}
+          </td>
+          <td class="total-cell" [style.background-color]="getColor(getAnnualReturn(year))">
+            {{ getAnnualReturn(year) | percent:'1.1-1' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

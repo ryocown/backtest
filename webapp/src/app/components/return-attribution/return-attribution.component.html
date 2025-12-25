@@ -1,0 +1,9 @@
+<div class="attr-container">
+  <div class="attr-header">
+    <h3>{{title}}</h3>
+    <button class="toggle-btn" (click)="toggleView()">
+      Switch to {{showSectors ? 'Asset' : 'Sector'}} View
+    </button>
+  </div>
+  <div #chartContainer class="chart-container"></div>
+</div>

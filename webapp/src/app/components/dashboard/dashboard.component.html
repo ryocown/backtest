@@ -1,0 +1,140 @@
+<div class="dashboard-container" *ngIf="data$ | async as data">
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h1>Institutional Backtester <small>v{{data.version}}</small></h1>
+      <span class="export-time">Exported: {{data.exported_at | date:'medium'}}</span>
+    </div>
+    <button class="config-btn" (click)="goToConfig()">Configure Analysis</button>
+  </header>
+
+  <nav class="dashboard-tabs">
+    <button [class.active]="activeTab === 'overview'" (click)="setTab('overview')">Overview</button>
+    <button [class.active]="activeTab === 'performance'" (click)="setTab('performance')">Performance</button>
+    <button [class.active]="activeTab === 'risk'" (click)="setTab('risk')">Risk Analysis</button>
+    <button [class.active]="activeTab === 'tda'" (click)="setTab('tda')">Market Topology</button>
+  </nav>
+
+  <div class="strategy-banner" *ngIf="data.backtest && selectedStrategy">
+    <div class="banner-info">
+      <span class="label">Analyzing:</span>
+      <span class="value">{{selectedStrategy}}</span>
+    </div>
+    <div class="strategy-selector">
+      <button *ngFor="let strat of data.backtest.strategies" [class.active]="strat === selectedStrategy"
+        (click)="selectStrategy(strat)">
+        {{strat}}
+      </button>
+    </div>
+  </div>
+
+  <div [ngSwitch]="activeTab" class="tab-content">
+
+    <!-- OVERVIEW TAB -->
+    <div *ngSwitchCase="'overview'">
+      <section class="metrics-grid">
+        <div class="metric-card" *ngFor="let strat of data.backtest.strategies">
+          <h3>{{strat}}</h3>
+          <div class="stats-table">
+            <div class="stat-row">
+              <span>Total Return</span>
+              <span [class.positive]="data.backtest.stats[strat]['total_return'] > 0">
+                {{data.backtest.stats[strat]['total_return'] | percent:'1.2-2'}}
+              </span>
+            </div>
+            <div class="stat-row">
+              <span>Sharpe</span>
+              <span>{{data.backtest.stats[strat]['daily_sharpe'] | number:'1.2-2'}}</span>
+            </div>
+            <div class="stat-row">
+              <span>Max Drawdown</span>
+              <span class="negative">{{data.backtest.stats[strat]['max_drawdown'] | percent:'1.2-2'}}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="charts-area">
+        <app-equity-curve [data]="data.backtest" [selectedStrategy]="selectedStrategy"></app-equity-curve>
+      </section>
+    </div>
+
+    <!-- PERFORMANCE TAB -->
+    <div *ngSwitchCase="'performance'">
+      <div class="performance-grid" *ngIf="selectedStrategy">
+        <div class="full-width">
+          <app-monthly-heatmap [monthlyData]="data.backtest.monthly_returns[selectedStrategy]"
+            [title]="'Monthly Returns: ' + selectedStrategy">
+          </app-monthly-heatmap>
+        </div>
+
+        <!-- Quick Glance Overlays (Multi-Strategy) -->
+        <div class="half-width">
+          <app-performance-metric-chart [multiData]="getRollingMetricOverlay(data, 'sharpe')"
+            title="Rolling Sharpe (6M) - All Strategies" yAxisTitle="Sharpe Ratio">
+          </app-performance-metric-chart>
+        </div>
+        <div class="half-width">
+          <app-performance-metric-chart [multiData]="getRollingMetricOverlay(data, 'volatility')"
+            title="Rolling Volatility (6M) - All Strategies" yAxisTitle="Annualized Vol">
+          </app-performance-metric-chart>
+        </div>
+        <div class="half-width">
+          <app-performance-metric-chart [multiData]="getRollingMetricOverlay(data, 'alpha')"
+            title="Rolling Alpha (6M) - All Strategies" yAxisTitle="Alpha">
+          </app-performance-metric-chart>
+        </div>
+        <div class="half-width">
+          <app-performance-metric-chart [multiData]="getRollingMetricOverlay(data, 'beta')"
+            title="Rolling Beta (6M) - All Strategies" yAxisTitle="Beta">
+          </app-performance-metric-chart>
+        </div>
+
+        <div class="full-width margin-top" *ngIf="data.backtest.return_attribution[selectedStrategy]">
+          <app-return-attribution [attributionData]="data.backtest.return_attribution[selectedStrategy]"
+            [sectorData]="data.backtest.sector_returns[selectedStrategy]"
+            [title]="'Cumulative Return Attribution: ' + selectedStrategy">
+          </app-return-attribution>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK TAB -->
+    <div *ngSwitchCase="'risk'">
+      <div class="risk-dashboard" *ngIf="selectedStrategy">
+        <div class="risk-grid">
+          <app-drawdown-heatmap [events]="data.backtest.drawdown_events[selectedStrategy]"
+            title="Drawdown Recovery Dynamics">
+          </app-drawdown-heatmap>
+          <app-risk-attribution [riskData]="data.backtest.risk_attribution[selectedStrategy]"
+            [sectorMap]="data.backtest.sector_maps[selectedStrategy]" title="Asset Risk Contribution">
+          </app-risk-attribution>
+        </div>
+        <div class="full-width margin-top">
+          <app-return-distribution [distData]="data.backtest.return_distribution[selectedStrategy]"
+            [title]="'Return Distribution: ' + selectedStrategy">
+          </app-return-distribution>
+        </div>
+        <div class="full-width margin-top">
+          <app-correlation-matrix [correlationData]="data.backtest.correlation_matrix"
+            [title]="'Cross-Strategy Correlation Hierarchy'">
+          </app-correlation-matrix>
+        </div>
+      </div>
+    </div>
+
+    <!-- TDA TAB -->
+    <div *ngSwitchCase="'tda'">
+      <div class="tda-dashboard" *ngIf="data.tda">
+        <app-tda-explorer [data]="data.tda"></app-tda-explorer>
+        <div class="margin-top">
+          <app-tda-trends [trends]="data.tda.trends"></app-tda-trends>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="loading-state" *ngIf="!(data$ | async)">
+  <div class="spinner"></div>
+</div>

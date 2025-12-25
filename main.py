@@ -27,6 +27,8 @@ def main():
     parser.add_argument('--tda-start', type=str, default="2020-02-18", help="TDA start date (YYYY-MM-DD)")
     parser.add_argument('--tda-end', type=str, default="2020-04-06", help="TDA end date (YYYY-MM-DD)")
     parser.add_argument('--tda-window', type=int, default=6, help="TDA window size in months")
+    parser.add_argument('--web-export', action='store_true', help="Export results to JSON for web UI")
+    parser.add_argument('--export-path', type=str, help="Custom path for web export JSON")
     
     args = parser.parse_args()
 
@@ -53,11 +55,23 @@ def main():
     
     # 6. Plot & Display Results
     engine.display_results()
+    
+    # --- Web Export Logic ---
+    if args.web_export:
+        tda_params = None
+        if args.tda:
+            tda_params = {
+                'start': args.tda_start,
+                'end': args.tda_end,
+                'window': args.tda_window
+            }
+        engine.web_export(output_path=args.export_path, tda_params=tda_params)
+
     if not args.no_graph:
         engine.plot_all()
     
-    # 7. Standalone TDA if requested via CLI
-    if args.tda:
+    # 7. Standalone TDA if requested via CLI (and not already run by web_export)
+    if args.tda and not args.web_export:
         engine.run_tda_explorer(start_date=args.tda_start, end_date=args.tda_end, window_months=args.tda_window)
 
 if __name__ == "__main__":

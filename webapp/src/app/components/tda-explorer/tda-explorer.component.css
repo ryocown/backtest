@@ -1,0 +1,78 @@
+.tda-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tda-controls {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.date-slider {
+  width: 100%;
+  accent-color: #38bdf8;
+}
+
+.metrics-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mini-card {
+  background: #0f172a;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  flex: 1;
+  min-width: 150px;
+}
+
+.mini-card label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.mini-card span {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.tda-visuals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.plot-box {
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  overflow: hidden;
+  min-height: 450px;
+}
+
+@media (max-width: 1024px) {
+  .tda-visuals {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .plot-box {
+    height: 500px;
+  }
+}

@@ -1,0 +1,33 @@
+.heatmap-wrapper {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+h3 {
+  margin-top: 0;
+  color: #38bdf8;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.heatmap-container {
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+}
+
+::ng-deep .grid line {
+  stroke: #64748b;
+  stroke-opacity: 0.1;
+  shape-rendering: crispEdges;
+}
+
+::ng-deep .domain {
+  stroke: #64748b;
+}
+
+::ng-deep .tick text {
+  fill: #64748b;
+  font-size: 10px;
+}

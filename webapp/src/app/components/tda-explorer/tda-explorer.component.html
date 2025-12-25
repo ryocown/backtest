@@ -1,0 +1,31 @@
+<div class="tda-container" *ngIf="data">
+  <div class="tda-controls">
+    <div class="slider-group">
+      <label>Window Analysis Date: <strong>{{currentWindow?.date}}</strong></label>
+      <input type="range" [min]="0" [max]="data.windows.length - 1" [(ngModel)]="currentIndex"
+        (input)="onSliderChange($event)" class="date-slider">
+    </div>
+
+    <div class="metrics-row" *ngIf="currentWindow">
+      <div class="mini-card">
+        <label>Avg Correlation</label>
+        <span>{{currentWindow.avg_corr | number:'1.2-2'}}</span>
+      </div>
+      <div class="mini-card">
+        <label>Euler Characteristic (χ)</label>
+        <span>{{currentWindow.chi}}</span>
+      </div>
+      <div class="mini-card">
+        <label>Betti Numbers</label>
+        <span>{{currentWindow.betti.join(', ')}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tda-visuals">
+    <div #projectionPlot class="plot-box"></div>
+    <div #diagramPlot class="plot-box"></div>
+    <div #landscapePlot class="plot-box"></div>
+    <div #barcodePlot class="plot-box"></div>
+  </div>
+</div>

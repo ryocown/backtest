@@ -1,0 +1,22 @@
+<div class="corr-container">
+  <h3>{{title}}</h3>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th *ngFor="let s of strategies">{{s}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s1 of strategies">
+          <td class="header-cell">{{s1}}</td>
+          <td *ngFor="let s2 of strategies" [style.background-color]="getColor(getCorr(s1, s2))"
+            [title]="getCorr(s1, s2) | number:'1.2-2'">
+            {{ getCorr(s1, s2) | number:'1.2-2' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

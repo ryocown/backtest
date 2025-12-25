@@ -1,0 +1,63 @@
+<div class="config-container">
+  <header class="config-header">
+    <h1>Analysis Configuration</h1>
+    <button class="nav-btn" (click)="goToDashboard()">Back to Dashboard</button>
+  </header>
+
+  <div class="config-grid">
+    <section class="config-section">
+      <h2>General Settings</h2>
+      <div class="form-group">
+        <label>Portfolio YAML</label>
+        <input type="text" [(ngModel)]="config.portfolio">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" [(ngModel)]="config.startDate">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" [(ngModel)]="config.endDate">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Benchmarks (comma separated)</label>
+        <input type="text" [(ngModel)]="config.benchmarks">
+      </div>
+    </section>
+
+    <section class="config-section">
+      <div class="section-header">
+        <h2>TDA Analysis</h2>
+        <input type="checkbox" [(ngModel)]="config.enableTda">
+      </div>
+
+      <div class="tda-fields" [class.disabled]="!config.enableTda">
+        <div class="form-row">
+          <div class="form-group">
+            <label>TDA Start Date</label>
+            <input type="date" [(ngModel)]="config.tdaStart" [disabled]="!config.enableTda">
+          </div>
+          <div class="form-group">
+            <label>TDA End Date</label>
+            <input type="date" [(ngModel)]="config.tdaEnd" [disabled]="!config.enableTda">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Window (Months)</label>
+          <input type="number" [(ngModel)]="config.tdaWindow" [disabled]="!config.enableTda">
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="command-output">
+    <h2>Execution Command</h2>
+    <p class="hint">Copy and run this command in your terminal to update analysis results.</p>
+    <div class="command-box">
+      <code>{{generatedCommand}}</code>
+      <button class="copy-btn" (click)="copyCommand()">Copy</button>
+    </div>
+  </section>
+</div>

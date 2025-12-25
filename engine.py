@@ -423,31 +423,38 @@ class BacktestEngine:
         except ImportError:
             pass
 
-    def run_tda_explorer(self, start_date=None, end_date=None, window_months=6):
-        """Launches the interactive TDA explorer using all cached tickers."""
+    def get_tda_results(self, start_date=None, end_date=None, window_months=6):
+        """Precomputes TDA results and returns them as a list of dictionaries."""
         from tda_engine import TDAManager
-        from interactive_tda import TDAExplorer
         import numpy as np
-        
+
         # 1. Setup Parameters
-        start_date = pd.to_datetime(start_date or "2020-02-18")
-        end_date = pd.to_datetime(end_date or "2020-04-06")
+        if self.data is not None and not self.data.empty:
+            last_date = self.data.index[-1]
+            default_start = (last_date - pd.DateOffset(months=3)).strftime('%Y-%m-%d')
+            default_end = last_date.strftime('%Y-%m-%d')
+        else:
+            default_start = "2020-02-18"
+            default_end = "2020-04-06"
+
+        start_date = pd.to_datetime(start_date or default_start)
+        end_date = pd.to_datetime(end_date or default_end)
         data_start = (start_date - pd.DateOffset(months=window_months)).strftime('%Y-%m-%d')
-        
+
         # 2. Get Tickers
         tickers = self.data_engine.list_cached_tickers()
         if not tickers:
             logger.warning("No cached tickers found for TDA analysis.")
-            return
-            
+            return [], None, None
+
         logger.info(f"Loading data for {len(tickers)} tickers for TDA...")
         df = self.data_engine.get_historical_data(tickers, data_start, end_date.strftime('%Y-%m-%d'))
         df = df.dropna(axis=1)
-        
+
         available_dates = df.index[(df.index >= start_date) & (df.index <= end_date)]
         if len(available_dates) == 0:
             logger.warning("No trading days found in the requested TDA range.")
-            return
+            return [], None, None
 
         # 3. Fetch SPY OHLC
         spy_start = (start_date - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
@@ -457,16 +464,16 @@ class BacktestEngine:
         # 4. Precomputation
         tda_manager = TDAManager(window_months=window_months)
         precomputed_results = []
-        
+
         logger.info(f"Precomputing TDA for {len(available_dates)} days...")
         for i, current_date in enumerate(available_dates):
             window_start = current_date - pd.DateOffset(months=window_months)
             sub_df = df.loc[window_start:current_date]
-            
+
             if sub_df.empty or len(sub_df) < 20:
                 precomputed_results.append(None)
                 continue
-                
+
             corr_matrix = sub_df.corr()
             dist_matrix = tda_manager.correlation_to_distance(corr_matrix)
             coords = tda_manager.get_3d_projection(dist_matrix)
@@ -474,12 +481,13 @@ class BacktestEngine:
             betti = tda_manager.calculate_betti_numbers(dgms, threshold=0.5)
             chi = tda_manager.calculate_euler_characteristic(betti)
             avg_corr = corr_matrix.values[np.triu_indices(len(corr_matrix), k=1)].mean()
-            
+
             precomputed_results.append({
                 'date': current_date,
                 'corr': corr_matrix,
                 'dist': dist_matrix,
                 'coords': coords,
+                'dgms': dgms,
                 'betti': betti,
                 'chi': chi,
                 'avg_corr': avg_corr
@@ -487,7 +495,39 @@ class BacktestEngine:
             if (i+1) % 5 == 0 or i == len(available_dates)-1:
                 print(f"TDA Progress: {i+1}/{len(available_dates)}", end="\r")
         print("\nPrecomputation complete.")
+        return precomputed_results, available_dates, spy_ohlc
+
+    def run_tda_explorer(self, start_date=None, end_date=None, window_months=6):
+        """Launches the interactive TDA explorer using all cached tickers."""
+        from interactive_tda import TDAExplorer
+        
+        results, dates, spy_ohlc = self.get_tda_results(start_date, end_date, window_months)
+        if not results:
+            return
 
         # 5. Launch Explorer
-        explorer = TDAExplorer(available_dates, precomputed_results, spy_ohlc)
+        explorer = TDAExplorer(dates, results, spy_ohlc)
         explorer.show()
+
+    def web_export(self, output_path=None, tda_params=None):
+        """Exports all results to a web-ready JSON package."""
+        from web_export import export_to_web
+        
+        tda_results = None
+        if tda_params:
+            tda_results, _, _ = self.get_tda_results(
+                start_date=tda_params.get('start'),
+                end_date=tda_params.get('end'),
+                window_months=tda_params.get('window', 6)
+            )
+            
+        sector_maps = {cfg['_name']: cfg.get('_custom_sector_map', {}) for cfg in self.configs}
+
+        export_to_web(
+            results=self.results,
+            data=self.data,
+            metadata=self.metadata,
+            tda_results=tda_results,
+            sector_maps=sector_maps,
+            output_path=output_path
+        )
