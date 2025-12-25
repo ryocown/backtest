@@ -392,6 +392,15 @@ class BacktestEngine:
                 viz.plot_valuation_comparison(self.results, self.metadata)
             if is_selected('global', None, "Historical P/E Trend"):
                 viz.plot_historical_pe_trend(self.results, self.fundamental_engine, prices=self.data)
+        
+        # --- Launch TDA Explorer if selected ---
+        if selection and selection.get('tda', {}).get('enabled'):
+            tda_cfg = selection['tda']
+            self.run_tda_explorer(
+                start_date=tda_cfg['start'],
+                end_date=tda_cfg['end'],
+                window_months=tda_cfg['window']
+            )
 
         plt.show()
 
@@ -413,3 +422,72 @@ class BacktestEngine:
             viz.make_legend_interactive(plt.gcf())
         except ImportError:
             pass
+
+    def run_tda_explorer(self, start_date=None, end_date=None, window_months=6):
+        """Launches the interactive TDA explorer using all cached tickers."""
+        from tda_engine import TDAManager
+        from interactive_tda import TDAExplorer
+        import numpy as np
+        
+        # 1. Setup Parameters
+        start_date = pd.to_datetime(start_date or "2020-02-18")
+        end_date = pd.to_datetime(end_date or "2020-04-06")
+        data_start = (start_date - pd.DateOffset(months=window_months)).strftime('%Y-%m-%d')
+        
+        # 2. Get Tickers
+        tickers = self.data_engine.list_cached_tickers()
+        if not tickers:
+            logger.warning("No cached tickers found for TDA analysis.")
+            return
+            
+        logger.info(f"Loading data for {len(tickers)} tickers for TDA...")
+        df = self.data_engine.get_historical_data(tickers, data_start, end_date.strftime('%Y-%m-%d'))
+        df = df.dropna(axis=1)
+        
+        available_dates = df.index[(df.index >= start_date) & (df.index <= end_date)]
+        if len(available_dates) == 0:
+            logger.warning("No trading days found in the requested TDA range.")
+            return
+
+        # 3. Fetch SPY OHLC
+        spy_start = (start_date - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
+        spy_end = (end_date + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
+        spy_ohlc = self.data_engine.get_ticker_ohlc('SPY', spy_start, spy_end)
+
+        # 4. Precomputation
+        tda_manager = TDAManager(window_months=window_months)
+        precomputed_results = []
+        
+        logger.info(f"Precomputing TDA for {len(available_dates)} days...")
+        for i, current_date in enumerate(available_dates):
+            window_start = current_date - pd.DateOffset(months=window_months)
+            sub_df = df.loc[window_start:current_date]
+            
+            if sub_df.empty or len(sub_df) < 20:
+                precomputed_results.append(None)
+                continue
+                
+            corr_matrix = sub_df.corr()
+            dist_matrix = tda_manager.correlation_to_distance(corr_matrix)
+            coords = tda_manager.get_3d_projection(dist_matrix)
+            dgms = tda_manager.compute_persistence(dist_matrix)
+            betti = tda_manager.calculate_betti_numbers(dgms, threshold=0.5)
+            chi = tda_manager.calculate_euler_characteristic(betti)
+            avg_corr = corr_matrix.values[np.triu_indices(len(corr_matrix), k=1)].mean()
+            
+            precomputed_results.append({
+                'date': current_date,
+                'corr': corr_matrix,
+                'dist': dist_matrix,
+                'coords': coords,
+                'betti': betti,
+                'chi': chi,
+                'avg_corr': avg_corr
+            })
+            if (i+1) % 5 == 0 or i == len(available_dates)-1:
+                print(f"TDA Progress: {i+1}/{len(available_dates)}", end="\r")
+        print("\nPrecomputation complete.")
+
+        # 5. Launch Explorer
+        explorer = TDAExplorer(available_dates, precomputed_results, spy_ohlc)
+        explorer.show()

@@ -23,6 +23,10 @@ def main():
     parser.add_argument('--benchmarks', type=str, default="SPY,QQQ,VTI", help="Comma-delimited benchmark tickers")
     parser.add_argument('--rf', type=float, default=0.04, help="Risk-free rate (e.g., 0.04 for 4%)")
     parser.add_argument('--no-graph', action='store_true', help="Do not render any graphs")
+    parser.add_argument('--tda', action='store_true', help="Enable TDA Interactive Explorer")
+    parser.add_argument('--tda-start', type=str, default="2020-02-18", help="TDA start date (YYYY-MM-DD)")
+    parser.add_argument('--tda-end', type=str, default="2020-04-06", help="TDA end date (YYYY-MM-DD)")
+    parser.add_argument('--tda-window', type=int, default=6, help="TDA window size in months")
     
     args = parser.parse_args()
 
@@ -51,6 +55,10 @@ def main():
     engine.display_results()
     if not args.no_graph:
         engine.plot_all()
+    
+    # 7. Standalone TDA if requested via CLI
+    if args.tda:
+        engine.run_tda_explorer(start_date=args.tda_start, end_date=args.tda_end, window_months=args.tda_window)
 
 if __name__ == "__main__":
     main()

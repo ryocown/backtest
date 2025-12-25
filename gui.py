@@ -48,6 +48,25 @@ class GraphSelector:
         ttk.Button(btn_frame, text="Deselect All", command=self._deselect_all).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="RENDER", command=self._on_render).pack(side=tk.RIGHT, padx=5)
         
+        # 0. TDA Configuration Section
+        tda_frame = ttk.LabelFrame(self.scrollable_frame, text="Topological Data Analysis (TDA)")
+        tda_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.tda_enabled = tk.BooleanVar(value=False)
+        ttk.Checkbutton(tda_frame, text="Enable TDA Interactive Explorer", variable=self.tda_enabled).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+        
+        ttk.Label(tda_frame, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
+        self.tda_start = tk.StringVar(value="2020-02-18")
+        ttk.Entry(tda_frame, textvariable=self.tda_start).grid(row=1, column=1, sticky=tk.W, padx=10, pady=2)
+        
+        ttk.Label(tda_frame, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, sticky=tk.W, padx=10, pady=2)
+        self.tda_end = tk.StringVar(value="2020-04-06")
+        ttk.Entry(tda_frame, textvariable=self.tda_end).grid(row=2, column=1, sticky=tk.W, padx=10, pady=2)
+        
+        ttk.Label(tda_frame, text="Window (Months):").grid(row=3, column=0, sticky=tk.W, padx=10, pady=2)
+        self.tda_window = tk.StringVar(value="6")
+        ttk.Entry(tda_frame, textvariable=self.tda_window).grid(row=3, column=1, sticky=tk.W, padx=10, pady=2)
+
         # 1. Global Plots Section
         global_frame = ttk.LabelFrame(self.scrollable_frame, text="Global Plots")
         global_frame.pack(fill=tk.X, padx=5, pady=5)
@@ -89,7 +108,13 @@ class GraphSelector:
     def _on_render(self):
         self.final_selection = {
             'global': {plot: var.get() for plot, var in self.selection['global'].items()},
-            'per_entity': {entity: {plot: var.get() for plot, var in entity_plots.items()} for entity, entity_plots in self.selection['per_entity'].items()}
+            'per_entity': {entity: {plot: var.get() for plot, var in entity_plots.items()} for entity, entity_plots in self.selection['per_entity'].items()},
+            'tda': {
+                'enabled': self.tda_enabled.get(),
+                'start': self.tda_start.get(),
+                'end': self.tda_end.get(),
+                'window': int(self.tda_window.get() if self.tda_window.get().isdigit() else 6)
+            }
         }
         self.root.destroy()
 

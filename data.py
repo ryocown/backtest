@@ -63,6 +63,59 @@ class DataEngine:
             return df, failed_tickers
         return df
 
+    def get_ticker_ohlc(self, ticker, start_date, end_date):
+        """Fetches full OHLC data for a single ticker.
+        
+        Args:
+            ticker: Ticker symbol
+            start_date: Start date for data
+            end_date: End date for data
+            
+        Returns:
+            DataFrame with OHLC data
+        """
+        cache_path = self._cache_path(ticker)
+        req_start, req_end = pd.Timestamp(start_date).normalize(), pd.Timestamp(end_date).normalize()
+        
+        # Try to load from cache
+        cached_df = self._load_cache(cache_path)
+        
+        if cached_df is not None:
+            cache_start, cache_end = cached_df.index.min().normalize(), cached_df.index.max().normalize()
+            
+            # Full cache hit
+            if cache_start <= req_start and cache_end >= req_end:
+                logger.debug(f"Cache hit for {ticker}")
+                return cached_df.loc[req_start:req_end]
+            
+            # Partial hit: check if the 'gaps' relative to data actually contain market days
+            has_gap = False
+            if req_start < cache_start:
+                if not self._get_market_days(req_start, cache_start - pd.Timedelta(days=1)).empty:
+                    has_gap = True
+            if req_end > cache_end:
+                if not self._get_market_days(cache_end + pd.Timedelta(days=1), req_end).empty:
+                    has_gap = True
+            
+            if not has_gap:
+                logger.debug(f"Cache effective hit for {ticker} (no market days in gaps)")
+                return cached_df.loc[req_start:req_end]
+
+            # Partial cache hit - fetch missing ranges
+            logger.info(f"Cache partial hit for {ticker}: have {cache_start.date()}-{cache_end.date()}")
+            cached_df = self._fill_cache_gaps(ticker, cached_df, cache_start, cache_end, req_start, req_end)
+            self._save_cache(cache_path, cached_df)
+            return cached_df.loc[req_start:req_end]
+        
+        # No cache - fetch full range
+        logger.info(f"Fetching {ticker} ({start_date} to {end_date})...")
+        new_df = self._fetch_bars(ticker, start_date, end_date)
+        if new_df is not None:
+            self._save_cache(cache_path, new_df)
+            return new_df.loc[req_start:req_end]
+        
+        return None
+
     def get_metadata(self, tickers):
         """Fetches sector metadata for tickers, utilizing local cache."""
         updated = False
@@ -74,6 +127,17 @@ class DataEngine:
         if updated:
             self._save_json(self.metadata_path, self.metadata)
         return self.metadata
+
+    def list_cached_tickers(self):
+        """Returns a list of all tickers currently in the data_cache."""
+        tickers = []
+        if not os.path.exists(self.cache_dir):
+            return tickers
+        
+        for f in os.listdir(self.cache_dir):
+            if f.endswith('.csv'):
+                tickers.append(f[:-4])
+        return sorted(tickers)
 
     # -------------------------------------------------------------------------
     # Alpaca Client
