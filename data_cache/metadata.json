@@ -252,5 +252,165 @@
     "trailingPE": 34.092583,
     "forwardPE": null,
     "trailingPegRatio": null
+  },
+  "VIXM": {
+    "sector": "Trading--Miscellaneous",
+    "name": "ProShares VIX Mid-Term Futures ETF"
+  },
+  "COIN": {
+    "sector": "Financial Services",
+    "name": "Coinbase Global, Inc."
+  },
+  "GOOG": {
+    "sector": "Communication Services",
+    "name": "Alphabet Inc."
+  },
+  "MRVL": {
+    "sector": "Technology",
+    "name": "Marvell Technology, Inc."
+  },
+  "SQ": {
+    "sector": "Other",
+    "name": "SQ"
+  },
+  "TIP": {
+    "sector": "Inflation-Protected Bond",
+    "name": "iShares TIPS Bond ETF"
+  },
+  "TQQQ": {
+    "sector": "Trading--Leveraged Equity",
+    "name": "ProShares UltraPro QQQ"
+  },
+  "TSM": {
+    "sector": "Technology",
+    "name": "Taiwan Semiconductor Manufacturing Company Limited"
+  },
+  "CSCO": {
+    "sector": "Technology",
+    "name": "Cisco Systems, Inc."
+  },
+  "IBM": {
+    "sector": "Technology",
+    "name": "International Business Machines Corporation"
+  },
+  "USMV": {
+    "sector": "Large Blend",
+    "name": "iShares MSCI USA Min Vol Factor ETF"
+  },
+  "ADBE": {
+    "sector": "Technology",
+    "name": "Adobe Inc."
+  },
+  "CRM": {
+    "sector": "Technology",
+    "name": "Salesforce, Inc."
+  },
+  "NFLX": {
+    "sector": "Communication Services",
+    "name": "Netflix, Inc."
+  },
+  "NOW": {
+    "sector": "Technology",
+    "name": "ServiceNow, Inc."
+  },
+  "BIL": {
+    "sector": "Ultrashort Bond",
+    "name": "State Street SPDR Bloomberg 1-3 Month T-Bill ETF"
+  },
+  "AXON": {
+    "sector": "Industrials",
+    "name": "Axon Enterprise, Inc."
+  },
+  "CCJ": {
+    "sector": "Energy",
+    "name": "Cameco Corporation"
+  },
+  "CRWD": {
+    "sector": "Technology",
+    "name": "CrowdStrike Holdings, Inc."
+  },
+  "DOCS": {
+    "sector": "Healthcare",
+    "name": "Doximity, Inc."
+  },
+  "ISRG": {
+    "sector": "Healthcare",
+    "name": "Intuitive Surgical, Inc."
+  },
+  "PLTR": {
+    "sector": "Technology",
+    "name": "Palantir Technologies Inc."
+  },
+  "RKLB": {
+    "sector": "Industrials",
+    "name": "Rocket Lab Corporation"
+  },
+  "ROK": {
+    "sector": "Industrials",
+    "name": "Rockwell Automation, Inc."
+  },
+  "TER": {
+    "sector": "Technology",
+    "name": "Teradyne, Inc."
+  },
+  "VBK": {
+    "sector": "Small Growth",
+    "name": "Vanguard Small-Cap Growth Index Fund ETF Shares"
+  },
+  "VEEV": {
+    "sector": "Healthcare",
+    "name": "Veeva Systems Inc."
+  },
+  "VST": {
+    "sector": "Utilities",
+    "name": "Vistra Corp."
+  },
+  "ZS": {
+    "sector": "Technology",
+    "name": "Zscaler, Inc."
+  },
+  "CEG": {
+    "sector": "Utilities",
+    "name": "Constellation Energy Corporation"
+  },
+  "IDXX": {
+    "sector": "Healthcare",
+    "name": "IDEXX Laboratories, Inc."
+  },
+  "PWR": {
+    "sector": "Industrials",
+    "name": "Quanta Services, Inc."
+  },
+  "TMO": {
+    "sector": "Healthcare",
+    "name": "Thermo Fisher Scientific Inc."
+  },
+  "TT": {
+    "sector": "Industrials",
+    "name": "Trane Technologies plc"
+  },
+  "URI": {
+    "sector": "Industrials",
+    "name": "United Rentals, Inc."
+  },
+  "CME": {
+    "sector": "Financial Services",
+    "name": "CME Group Inc."
+  },
+  "NEE": {
+    "sector": "Utilities",
+    "name": "NextEra Energy, Inc."
+  },
+  "GLDM": {
+    "sector": "Commodities Focused",
+    "name": "SPDR Gold MiniShares"
+  },
+  "MU": {
+    "sector": "Technology",
+    "name": "Micron Technology, Inc."
+  },
+  "FEZ": {
+    "sector": "Europe Stock",
+    "name": "SPDR EURO STOXX 50 ETF"
   }
 }

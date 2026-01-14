@@ -1,0 +1,44 @@
+# the actual portfolio and allocation currently held
+settings:
+  risk_free_rate: 0.04
+  rebalance_frequency: "once"  # daily, weekly, monthly, quarterly, yearly, once
+  max_nan_pct: 0.5  # Drop tickers with >50% NaN, forward-fill the rest
+
+portfolio:
+  universe:
+  exclusions: []
+  sector_weights:
+  fixed_weights:
+    AAPL: 0.021604
+    AMAT: 0.039147
+    AMD: 0.03809
+    AMZN: 0.018557
+    AVGO: 0.039437
+    BLK: 0.010514
+    BRK.B: 0.018291
+    BX: 0.015114
+    CAT: 0.015805
+    COST: 0.023668
+    GE: 0.014394
+    GLDM: 0.087216
+    GOOGL: 0.094868
+    GS: 0.010999
+    JPM: 0.018167
+    LIN: 0.064233
+    LLY: 0.047998
+    MA: 0.010932
+    META: 0.040898
+    MS: 0.011165
+    MSFT: 0.032259
+    MU: 0.038059
+    NVDA: 0.027848
+    QCOM: 0.035292
+    SGOV: 0.000169
+    SPGI: 0.010511
+    TSLA: 0.028602
+    TXN: 0.03796
+    UNH: 0.062449
+    URI: 0.029297
+    V: 0.016564
+    WMT: 0.015031
+    XOM: 0.023944

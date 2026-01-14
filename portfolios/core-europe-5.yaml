@@ -1,0 +1,49 @@
+# Core + 5% Europe (lighter touch)
+# Minimal FEZ allocation to test diversification benefit
+
+settings:
+  risk_free_rate: 0.04
+  rebalance_frequency: quarterly
+  max_nan_pct: 0.5
+
+portfolio:
+  fixed_weights:
+    # Hedges (18.5%)
+    GLD:  0.095
+    SGOV: 0.09
+    # Semis (19%)
+    NVDA: 0.0475
+    AVGO: 0.0475
+    AMD: 0.02375
+    AMAT: 0.02375
+    QCOM: 0.02375
+    TXN: 0.02375
+    # Tech (19%)
+    MSFT: 0.0475
+    AAPL: 0.02375
+    AMZN: 0.02375
+    META: 0.0475
+    GOOGL: 0.02375
+    TSLA: 0.02375
+    # Financials (9.5%)
+    JPM: 0.011875
+    GS:   0.011875
+    MS:  0.011875
+    BLK:  0.011875
+    BX:  0.011875
+    V:    0.011875
+    MA:  0.011875
+    SPGI: 0.011875
+    # Consumers (9.5%)
+    BRK.B: 0.019
+    COST: 0.019
+    WMT:  0.011875
+    CAT:  0.011875
+    GE:   0.011875
+    # Hard assets + Healthcare (19%)
+    XOM:  0.0475
+    LIN:  0.0475
+    LLY:  0.0475
+    UNH:  0.0475
+    # Europe (5%)
+    FEZ: 0.05

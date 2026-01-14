@@ -1,11 +1,40 @@
+"""
+Graph Selection GUI for the Institutional Backtester.
+
+Provides a tkinter-based dialog for users to select which graphs to render.
+"""
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
+from typing import Optional
+
 
 class GraphSelector:
-    def __init__(self, strategies, benchmarks, global_plots, per_strategy_plots):
+    """
+    Modal dialog for selecting which graphs to render.
+    
+    Provides checkboxes for global plots (applied to all strategies)
+    and per-strategy/benchmark plots. Includes TDA configuration.
+    
+    Usage:
+        selector = GraphSelector(strategies, benchmarks, global_plots, per_strategy_plots)
+        selection = selector.get_selection()  # Blocks until user clicks RENDER or Cancel
+        if selection is None:
+            print("User cancelled")
+    """
+    
+    def __init__(
+        self,
+        strategies: list[str],
+        benchmarks: list[str],
+        global_plots: list[str],
+        per_strategy_plots: list[str],
+    ) -> None:
         self.root = tk.Tk()
         self.root.title("Institutional Backtester - Graph Selection")
         self.root.geometry("1000x800")
+        self.root.protocol("WM_DELETE_WINDOW", self._on_cancel)  # Handle window close
         
         self.strategies = strategies
         self.benchmarks = benchmarks
@@ -13,14 +42,30 @@ class GraphSelector:
         self.global_plots = global_plots
         self.per_strategy_plots = per_strategy_plots
         
-        self.selection = {
+        self.selection: dict[str, tk.BooleanVar] = {
             'global': {plot: tk.BooleanVar(value=True) for plot in global_plots},
-            'per_entity': {entity: {plot: tk.BooleanVar(value=True) for plot in per_strategy_plots} for entity in self.all_entities}
+            'per_entity': {
+                entity: {plot: tk.BooleanVar(value=True) for plot in per_strategy_plots}
+                for entity in self.all_entities
+            }
         }
+        
+        self.final_selection: Optional[dict] = None
+        self._cancelled = False
         
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Builds the UI components."""
+        # Buttons Frame (Fixed at top for visibility)
+        btn_frame = ttk.Frame(self.root)
+        btn_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        ttk.Button(btn_frame, text="Select All", command=self._select_all).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Deselect All", command=self._deselect_all).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=self._on_cancel).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(btn_frame, text="RENDER", command=self._on_render).pack(side=tk.RIGHT, padx=5)
+        
         # Main container with scrollbar
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -40,20 +85,19 @@ class GraphSelector:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         
-        # Buttons Frame (Fixed at top)
-        btn_frame = ttk.Frame(self.root)
-        btn_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        ttk.Button(btn_frame, text="Select All", command=self._select_all).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="Deselect All", command=self._deselect_all).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text="RENDER", command=self._on_render).pack(side=tk.RIGHT, padx=5)
+        # Enable mousewheel scrolling
+        def _on_mousewheel(event: tk.Event) -> None:
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         # 0. TDA Configuration Section
         tda_frame = ttk.LabelFrame(self.scrollable_frame, text="Topological Data Analysis (TDA)")
         tda_frame.pack(fill=tk.X, padx=5, pady=5)
         
         self.tda_enabled = tk.BooleanVar(value=False)
-        ttk.Checkbutton(tda_frame, text="Enable TDA Interactive Explorer", variable=self.tda_enabled).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+        ttk.Checkbutton(
+            tda_frame, text="Enable TDA Interactive Explorer", variable=self.tda_enabled
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
         
         ttk.Label(tda_frame, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
         self.tda_start = tk.StringVar(value="2020-02-18")
@@ -80,9 +124,13 @@ class GraphSelector:
         grid_frame.pack(fill=tk.X, padx=5, pady=5)
         
         # Header Row
-        ttk.Label(grid_frame, text="Entity", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(grid_frame, text="Entity", font=('Helvetica', 10, 'bold')).grid(
+            row=0, column=0, padx=5, pady=5
+        )
         for j, plot in enumerate(self.per_strategy_plots):
-            ttk.Label(grid_frame, text=plot, font=('Helvetica', 8, 'bold')).grid(row=0, column=j+1, padx=5, pady=5)
+            ttk.Label(grid_frame, text=plot, font=('Helvetica', 8, 'bold')).grid(
+                row=0, column=j+1, padx=5, pady=5
+            )
             
         # Entity Rows
         for i, entity in enumerate(self.all_entities):
@@ -91,33 +139,51 @@ class GraphSelector:
                 cb = ttk.Checkbutton(grid_frame, variable=self.selection['per_entity'][entity][plot])
                 cb.grid(row=i+1, column=j+1, padx=5, pady=2)
 
-    def _select_all(self):
+    def _select_all(self) -> None:
+        """Selects all checkboxes."""
         for var in self.selection['global'].values():
             var.set(True)
         for entity_plots in self.selection['per_entity'].values():
             for var in entity_plots.values():
                 var.set(True)
 
-    def _deselect_all(self):
+    def _deselect_all(self) -> None:
+        """Deselects all checkboxes."""
         for var in self.selection['global'].values():
             var.set(False)
         for entity_plots in self.selection['per_entity'].values():
             for var in entity_plots.values():
                 var.set(False)
 
-    def _on_render(self):
+    def _on_cancel(self) -> None:
+        """Handles cancel button or window close."""
+        self._cancelled = True
+        self.final_selection = None
+        self.root.destroy()
+
+    def _on_render(self) -> None:
+        """Builds the final selection dict and closes the dialog."""
         self.final_selection = {
             'global': {plot: var.get() for plot, var in self.selection['global'].items()},
-            'per_entity': {entity: {plot: var.get() for plot, var in entity_plots.items()} for entity, entity_plots in self.selection['per_entity'].items()},
+            'per_entity': {
+                entity: {plot: var.get() for plot, var in entity_plots.items()}
+                for entity, entity_plots in self.selection['per_entity'].items()
+            },
             'tda': {
                 'enabled': self.tda_enabled.get(),
                 'start': self.tda_start.get(),
                 'end': self.tda_end.get(),
-                'window': int(self.tda_window.get() if self.tda_window.get().isdigit() else 6)
+                'window': int(self.tda_window.get()) if self.tda_window.get().isdigit() else 6
             }
         }
         self.root.destroy()
 
-    def get_selection(self):
+    def get_selection(self) -> Optional[dict]:
+        """
+        Shows the dialog and blocks until user makes a selection.
+        
+        Returns:
+            Selection dict if RENDER clicked, None if cancelled.
+        """
         self.root.mainloop()
-        return getattr(self, 'final_selection', None)
+        return self.final_selection
