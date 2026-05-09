@@ -272,3 +272,135 @@ def plot_valuation_comparison(res, metadata: dict, title: str = "Portfolio Valua
         make_legend_interactive()
     except Exception as e:
         print(f"Valuation comparison plot failed: {e}")
+
+
+def plot_sectoral_allocation(results, strategy_name, metadata, custom_sector_map):
+    import matplotlib.pyplot as plt
+    import src.visualization as viz
+    
+    weights = results.get_security_weights(strategy_name)
+    sector_map = {
+        t: (custom_sector_map.get(t) if custom_sector_map else None)
+        or metadata.get(t, {}).get('sector', 'Other')
+        for t in weights.columns
+    }
+    sector_weights = weights.T.groupby(sector_map).sum().T
+    
+    ax = sector_weights.plot(
+        kind='area', stacked=True, figsize=(10, 6),
+        title=f"Sector: {strategy_name}"
+    )
+    ax.set_ylabel("Weight")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+    plt.tight_layout()
+    viz.make_legend_interactive(plt.gcf())
+
+
+def plot_risk_contribution_breakdown(strategy_name, config, data):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Get portfolio weights
+    portfolio = config.get('portfolio', {})
+    fixed_weights = portfolio.get('fixed_weights', {})
+    
+    if not fixed_weights:
+        logger.warning(f"No fixed_weights found for {strategy_name}, skipping risk breakdown")
+        return
+    
+    weights = pd.Series(fixed_weights)
+    
+    # Get the available tickers from data
+    valid_tickers = [t for t in weights.index if t in data.columns]
+    if len(valid_tickers) < 2:
+        logger.warning(f"Not enough tickers with price data for {strategy_name}")
+        return
+    
+    weights = weights[valid_tickers]
+    weights = weights / weights.sum()  # Renormalize
+    prices = data[valid_tickers]
+    
+    # Calculate returns
+    returns = prices.pct_change(fill_method=None).dropna()
+    
+    # Individual volatilities (annualized)
+    individual_vol = returns.std() * np.sqrt(252)
+    
+    # Portfolio volatility
+    cov_matrix = returns.cov() * 252  # Annualized covariance
+    port_var = float(weights @ cov_matrix @ weights)
+    port_vol = np.sqrt(port_var)
+    
+    # Marginal Contribution to Risk (MCTR)
+    mctr = (cov_matrix @ weights) / port_vol
+    
+    # Percentage Contribution to Risk
+    pct_ctr = (weights * mctr) / port_vol
+    
+    # Build result DataFrame
+    result = pd.DataFrame({
+        'weight': weights,
+        'vol': individual_vol,
+        'mctr': mctr,
+        'pct_ctr': pct_ctr
+    }).sort_values('pct_ctr', ascending=False)
+    
+    # Create visualization
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    
+    # 1. Top left: Percentage Contribution to Risk (bar chart)
+    ax1 = axes[0, 0]
+    colors = ['#e74c3c' if x > result['pct_ctr'].mean() else '#3498db' 
+              for x in result['pct_ctr']]
+    result['pct_ctr'].plot(kind='barh', ax=ax1, color=colors)
+    ax1.set_xlabel('% Contribution to Total Risk')
+    ax1.set_title('Risk Contribution by Holding\n(Red = Above Average)')
+    ax1.axvline(result['pct_ctr'].mean(), color='black', linestyle='--', alpha=0.5)
+    
+    # 2. Top right: Weight vs Risk Contribution scatter
+    ax2 = axes[0, 1]
+    ax2.scatter(result['weight'] * 100, result['pct_ctr'] * 100, 
+                s=result['vol'] * 500, alpha=0.6, c='#2ecc71')
+    for ticker in result.index:
+        ax2.annotate(ticker, 
+                    (result.loc[ticker, 'weight'] * 100, 
+                     result.loc[ticker, 'pct_ctr'] * 100),
+                    fontsize=7)
+    ax2.plot([0, result['weight'].max() * 100], 
+             [0, result['weight'].max() * 100], 
+             'k--', alpha=0.3, label='1:1 line')
+    ax2.set_xlabel('Portfolio Weight (%)')
+    ax2.set_ylabel('Risk Contribution (%)')
+    ax2.set_title('Weight vs Risk Contribution\n(Size = Volatility)')
+    ax2.legend()
+    
+    # 3. Bottom left: Individual volatility bar
+    ax3 = axes[1, 0]
+    result_sorted = result.sort_values('vol', ascending=True)
+    result_sorted['vol'].plot(kind='barh', ax=ax3, color='#9b59b6')
+    ax3.set_xlabel('Annualized Volatility')
+    ax3.set_title('Individual Asset Volatility')
+    ax3.axvline(port_vol, color='red', linestyle='-', linewidth=2, 
+                label=f'Portfolio Vol: {port_vol:.1%}')
+    ax3.legend()
+    
+    # 4. Bottom right: Top 10 risk contributors pie chart
+    ax4 = axes[1, 1]
+    top10 = result.head(10)['pct_ctr'].abs()  # Use absolute values for pie
+    if len(result) > 10:
+        other = result.iloc[10:]['pct_ctr'].abs().sum()
+        top10 = pd.concat([top10, pd.Series({'Other': other})])
+    top10 = top10[top10 > 0.001]
+    if len(top10) > 0:
+        top10.plot(kind='pie', ax=ax4, autopct='%.1f%%', startangle=90)
+    ax4.set_ylabel('')
+    ax4.set_title('Top 10 Risk Contributors (absolute)')
+    
+    plt.suptitle(f'{strategy_name} Risk Contribution Breakdown\nPortfolio Volatility: {port_vol:.1%}', 
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+
