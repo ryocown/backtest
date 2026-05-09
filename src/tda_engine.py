@@ -127,3 +127,49 @@ class TDAManager:
             })
             
         return results
+
+    def compute_tda_for_range(self, df, start_dt, end_dt, data_engine):
+        available_dates = df.index[(df.index >= start_dt) & (df.index <= end_dt)]
+        if len(available_dates) == 0:
+            logger.warning("No trading days found in the requested TDA range.")
+            return [], None, None
+
+        # Fetch SPY OHLC
+        spy_start = (start_dt - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
+        spy_end = (end_dt + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
+        spy_ohlc = data_engine.get_ticker_ohlc('SPY', spy_start, spy_end)
+
+        precomputed_results = []
+
+        logger.info(f"Precomputing TDA for {len(available_dates)} days...")
+        for i, current_date in enumerate(available_dates):
+            window_start = current_date - pd.DateOffset(months=self.window_months)
+            sub_df = df.loc[window_start:current_date]
+
+            if sub_df.empty or len(sub_df) < 20:
+                precomputed_results.append(None)
+                continue
+
+            corr_matrix = sub_df.corr()
+            dist_matrix = self.correlation_to_distance(corr_matrix)
+            coords = self.get_3d_projection(dist_matrix)
+            dgms = self.compute_persistence(dist_matrix)
+            betti = self.calculate_betti_numbers(dgms, threshold=0.5)
+            chi = self.calculate_euler_characteristic(betti)
+            avg_corr = corr_matrix.values[np.triu_indices(len(corr_matrix), k=1)].mean()
+
+            precomputed_results.append({
+                'date': current_date,
+                'corr': corr_matrix,
+                'dist': dist_matrix,
+                'coords': coords,
+                'dgms': dgms,
+                'betti': betti,
+                'chi': chi,
+                'avg_corr': avg_corr
+            })
+            if (i + 1) % 5 == 0 or i == len(available_dates) - 1:
+                print(f"TDA Progress: {i + 1}/{len(available_dates)}", end="\r")
+        print("\nPrecomputation complete.")
+        return precomputed_results, available_dates, spy_ohlc
+
