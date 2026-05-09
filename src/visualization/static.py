@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from analytics import AnalyticsEngine
-from visualization.cursor import make_legend_interactive
+from src.analytics import AnalyticsEngine
+from src.visualization.cursor import make_legend_interactive
 
 # Try to import seaborn for better style  
 try:

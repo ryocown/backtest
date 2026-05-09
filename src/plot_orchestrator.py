@@ -102,7 +102,7 @@ class PlotOrchestrator:
         
         # Import visualization module
         try:
-            import visualization as viz
+            import src.visualization as viz
         except ImportError:
             logger.error("Could not import visualization package.")
             return
@@ -183,7 +183,7 @@ class PlotOrchestrator:
         # P/E Trend requires FundamentalEngine
         if is_sel("Historical P/E Trend"):
             try:
-                from fundamentals import FundamentalEngine
+                from src.fundamentals import FundamentalEngine
                 fe = FundamentalEngine()
                 viz.plot_historical_pe_trend(self.results, fe, prices=self.data)
             except Exception as e:
@@ -271,7 +271,7 @@ class PlotOrchestrator:
         custom_sector_map: Optional[dict]
     ) -> None:
         """Plots sector allocation over time as stacked area chart."""
-        import visualization as viz
+        import src.visualization as viz
         
         weights = self.results.get_security_weights(strategy_name)
         sector_map = {
@@ -288,7 +288,7 @@ class PlotOrchestrator:
         ax.set_ylabel("Weight")
         plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         plt.tight_layout()
-        import visualization as viz
+        import src.visualization as viz
         viz.make_legend_interactive(plt.gcf())
 
     def _plot_risk_contribution_breakdown(

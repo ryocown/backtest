@@ -1,0 +1,44 @@
+settings:
+  risk_free_rate: 0.04
+  rebalance_frequency: "once"  # daily, weekly, monthly, quarterly, yearly, once
+  max_nan_pct: 0.5  # Drop tickers with >50% NaN, forward-fill the rest
+
+portfolio:
+  universe:
+  exclusions: []
+  sector_weights:
+  fixed_weights: # 20%
+    SGOV: 0.09
+    BRK.B: 0.02
+    CAT: 0.02
+    COST: 0.02
+    GE: 0.02
+    URI: 0.02
+    WMT: 0.02
+    GEV: 0.02
+    BLK: 0.0125
+    BX: 0.0125
+    GS: 0.0125
+    JPM: 0.0125
+    MA: 0.0125
+    MS: 0.0125
+    SPGI: 0.0125
+    V: 0.0125
+    TSLA: 0.01
+    LIN: 0.05
+    XOM: 0.05
+    LLY: 0.05
+    UNH: 0.04
+    GLDM: 0.09
+    AMAT: 0.03
+    AMD: 0.03
+    AVGO: 0.03
+    MU: 0.03
+    NVDA: 0.03
+    QCOM: 0.03
+    TXN: 0.03
+    AAPL: 0.03
+    AMZN: 0.03
+    GOOGL: 0.05
+    META: 0.03
+    MSFT: 0.03

@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-from data import DataEngine
-from analytics import AnalyticsEngine
+from src.data import DataEngine
+from src.analytics import AnalyticsEngine
 
 
 def load_portfolio_weights(config_path: str) -> pd.Series:

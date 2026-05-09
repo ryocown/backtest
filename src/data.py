@@ -74,46 +74,10 @@ class DataEngine:
         Returns:
             DataFrame with OHLC data
         """
-        cache_path = self._cache_path(ticker)
         req_start, req_end = pd.Timestamp(start_date).normalize(), pd.Timestamp(end_date).normalize()
-        
-        # Try to load from cache
-        cached_df = self._load_cache(cache_path)
-        
-        if cached_df is not None:
-            cache_start, cache_end = cached_df.index.min().normalize(), cached_df.index.max().normalize()
-            
-            # Full cache hit
-            if cache_start <= req_start and cache_end >= req_end:
-                logger.debug(f"Cache hit for {ticker}")
-                return cached_df.loc[req_start:req_end]
-            
-            # Partial hit: check if the 'gaps' relative to data actually contain market days
-            has_gap = False
-            if req_start < cache_start:
-                if not self._get_market_days(req_start, cache_start - pd.Timedelta(days=1)).empty:
-                    has_gap = True
-            if req_end > cache_end:
-                if not self._get_market_days(cache_end + pd.Timedelta(days=1), req_end).empty:
-                    has_gap = True
-            
-            if not has_gap:
-                logger.debug(f"Cache effective hit for {ticker} (no market days in gaps)")
-                return cached_df.loc[req_start:req_end]
-
-            # Partial cache hit - fetch missing ranges
-            logger.info(f"Cache partial hit for {ticker}: have {cache_start.date()}-{cache_end.date()}")
-            cached_df = self._fill_cache_gaps(ticker, cached_df, cache_start, cache_end, req_start, req_end)
-            self._save_cache(cache_path, cached_df)
-            return cached_df.loc[req_start:req_end]
-        
-        # No cache - fetch full range
-        logger.info(f"Fetching {ticker} ({start_date} to {end_date})...")
-        new_df = self._fetch_bars(ticker, start_date, end_date)
-        if new_df is not None:
-            self._save_cache(cache_path, new_df)
-            return new_df.loc[req_start:req_end]
-        
+        df = self._ensure_data_cached(ticker, start_date, end_date)
+        if df is not None:
+            return df.loc[req_start:req_end]
         return None
 
     def get_metadata(self, tickers):
@@ -220,12 +184,14 @@ class DataEngine:
     # Price Data Caching
     # -------------------------------------------------------------------------
     
-    def _get_ticker_data(self, ticker, start_date, end_date):
-        """Gets ticker data, using cache when possible."""
+    def _ensure_data_cached(self, ticker, start_date, end_date):
+        """Ensures daily bars for a ticker in date range are cached.
+        
+        Returns the full DataFrame from cache (potentially updated).
+        """
         cache_path = self._cache_path(ticker)
         req_start, req_end = pd.Timestamp(start_date).normalize(), pd.Timestamp(end_date).normalize()
         
-        # Try to load from cache
         cached_df = self._load_cache(cache_path)
         
         if cached_df is not None:
@@ -234,9 +200,9 @@ class DataEngine:
             # Full cache hit
             if cache_start <= req_start and cache_end >= req_end:
                 logger.debug(f"Cache hit for {ticker}")
-                return cached_df['close']
+                return cached_df
             
-            # Partial hit: check if the 'gaps' relative to data actually contain market days
+            # Partial hit
             has_gap = False
             if req_start < cache_start:
                 if not self._get_market_days(req_start, cache_start - pd.Timedelta(days=1)).empty:
@@ -247,21 +213,29 @@ class DataEngine:
             
             if not has_gap:
                 logger.debug(f"Cache effective hit for {ticker} (no market days in gaps)")
-                return cached_df['close']
+                return cached_df
 
             # Partial cache hit - fetch missing ranges
             logger.info(f"Cache partial hit for {ticker}: have {cache_start.date()}-{cache_end.date()}")
             cached_df = self._fill_cache_gaps(ticker, cached_df, cache_start, cache_end, req_start, req_end)
             self._save_cache(cache_path, cached_df)
-            return cached_df['close']
+            return cached_df
         
         # No cache - fetch full range
         logger.info(f"Fetching {ticker} ({start_date} to {end_date})...")
-        new_df = self._fetch_bars(ticker, start_date, end_date)
+        new_df = self._fetch_bars(ticker, req_start, req_end)
         if new_df is not None:
             self._save_cache(cache_path, new_df)
-            return new_df['close']
+            return new_df
         
+        return None
+
+    def _get_ticker_data(self, ticker, start_date, end_date):
+        """Gets ticker data, using cache when possible."""
+        req_start, req_end = pd.Timestamp(start_date).normalize(), pd.Timestamp(end_date).normalize()
+        df = self._ensure_data_cached(ticker, start_date, end_date)
+        if df is not None:
+            return df.loc[req_start:req_end]['close']
         return None
 
     def _fill_cache_gaps(self, ticker, cached_df, cache_start, cache_end, req_start, req_end):

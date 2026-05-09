@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from analytics import AnalyticsEngine
+from src.analytics import AnalyticsEngine
 
 # Try to import seaborn for better heatmaps
 try:

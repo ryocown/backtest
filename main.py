@@ -1,7 +1,7 @@
 import argparse
 import logging
 from datetime import datetime
-from engine import BacktestEngine
+from src.engine import BacktestEngine
 
 # Configure logging
 logging.basicConfig(

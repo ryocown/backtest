@@ -412,5 +412,9 @@
   "FEZ": {
     "sector": "Europe Stock",
     "name": "SPDR EURO STOXX 50 ETF"
+  },
+  "GEV": {
+    "sector": "Industrials",
+    "name": "GE Vernova Inc."
   }
 }

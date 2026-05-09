@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
-from analytics import AnalyticsEngine
-from visualization.cursor import make_legend_interactive
+from src.analytics import AnalyticsEngine
+from src.visualization.cursor import make_legend_interactive
 
 if TYPE_CHECKING:
     import pandas as pd

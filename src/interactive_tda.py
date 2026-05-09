@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
-from tda_engine import TDAManager
-from data import DataEngine
-import visualization as viz
+from src.tda_engine import TDAManager
+from src.data import DataEngine
+import src.visualization as viz
 from datetime import datetime, timedelta
 import argparse
 import sys

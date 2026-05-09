@@ -12,7 +12,7 @@ import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 
-from visualization.cursor import make_legend_interactive
+from src.visualization.cursor import make_legend_interactive
 
 # Optional TDA dependencies
 try:

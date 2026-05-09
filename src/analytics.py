@@ -320,3 +320,140 @@ class AnalyticsEngine:
         
         # Cumulative Contribution
         return weighted_returns.cumsum()
+
+    @staticmethod
+    def get_robustness_metrics(
+        prices: DataFrame,
+        strategy_name: str,
+        min_window: int = 20,
+        max_window: int = 252,
+        step: int = 20,
+        sharpe_threshold: float = 1.0
+    ) -> dict:
+        """
+        Calculates quantitative robustness and sensitivity metrics.
+        
+        Metrics computed:
+        - Sharpe Stability Score: Mean(Sharpe) / StdDev(Sharpe) across all windows
+        - Window Sensitivity: Avg |ΔSharpe| when window changes by step
+        - Plateau Width: % of window range where Sharpe > threshold
+        - Coefficient of Variation: StdDev / Mean across entire surface
+        - Temporal Consistency: Avg correlation of Sharpe between adjacent windows
+        
+        Args:
+            prices: Price DataFrame with strategy column.
+            strategy_name: Name of the strategy column.
+            min_window: Minimum rolling window size.
+            max_window: Maximum rolling window size.
+            step: Step between windows.
+            sharpe_threshold: Threshold for plateau calculation.
+            
+        Returns:
+            Dict with metrics and qualitative ratings.
+        """
+        if strategy_name not in prices.columns:
+            return {'error': f'Strategy {strategy_name} not found'}
+        
+        strategy_prices = prices[[strategy_name]]
+        windows = np.arange(min_window, max_window + 1, step)
+        
+        # Calculate Sharpe for each window
+        all_sharpes = []
+        for w in windows:
+            s = AnalyticsEngine.get_rolling_sharpe(strategy_prices, window=int(w)).iloc[:, 0]
+            all_sharpes.append(s)
+        
+        df_sharpe = pd.concat(all_sharpes, axis=1, keys=windows).dropna()
+        
+        if df_sharpe.empty or len(df_sharpe) < 10:
+            return {'error': 'Insufficient data for robustness analysis'}
+        
+        # Flatten all Sharpe values for overall stats
+        all_values = df_sharpe.values.flatten()
+        all_values = all_values[~np.isnan(all_values)]
+        
+        if len(all_values) == 0:
+            return {'error': 'No valid Sharpe values'}
+        
+        # 1. Sharpe Stability Score: Mean / StdDev (across all windows at each time point)
+        mean_sharpe = np.nanmean(all_values)
+        std_sharpe = np.nanstd(all_values)
+        stability_score = mean_sharpe / std_sharpe if std_sharpe > 0 else float('inf')
+        
+        # 2. Window Sensitivity: Average absolute change in Sharpe when window shifts
+        window_means = df_sharpe.mean()  # Mean Sharpe for each window
+        window_diffs = np.abs(np.diff(window_means.values))
+        window_sensitivity = np.mean(window_diffs) if len(window_diffs) > 0 else 0.0
+        
+        # 3. Plateau Width: % of windows where mean Sharpe > threshold
+        plateau_count = (window_means > sharpe_threshold).sum()
+        plateau_width = (plateau_count / len(windows)) * 100
+        
+        # 4. Coefficient of Variation
+        coef_of_variation = std_sharpe / mean_sharpe if mean_sharpe != 0 else float('inf')
+        
+        # 5. Temporal Consistency: Correlation between adjacent window columns
+        correlations = []
+        window_cols = list(df_sharpe.columns)
+        for i in range(len(window_cols) - 1):
+            corr = df_sharpe[window_cols[i]].corr(df_sharpe[window_cols[i + 1]])
+            if not np.isnan(corr):
+                correlations.append(corr)
+        temporal_consistency = np.mean(correlations) if correlations else 0.0
+        
+        # Qualitative ratings
+        def rate_stability(score: float) -> str:
+            if score >= 2.0:
+                return "Excellent"
+            elif score >= 1.5:
+                return "Good"
+            elif score >= 1.0:
+                return "Moderate"
+            else:
+                return "Poor"
+        
+        def rate_sensitivity(sens: float) -> str:
+            if sens < 0.05:
+                return "Low"
+            elif sens < 0.15:
+                return "Moderate"
+            else:
+                return "High"
+        
+        def rate_plateau(pct: float) -> str:
+            if pct >= 80:
+                return "Excellent"
+            elif pct >= 60:
+                return "Good"
+            elif pct >= 40:
+                return "Moderate"
+            else:
+                return "Narrow"
+        
+        def rate_cov(cov: float) -> str:
+            if cov < 0.3:
+                return "Excellent"
+            elif cov < 0.5:
+                return "Good"
+            elif cov < 0.8:
+                return "Moderate"
+            else:
+                return "High"
+        
+        return {
+            'strategy': strategy_name,
+            'mean_sharpe': mean_sharpe,
+            'std_sharpe': std_sharpe,
+            'stability_score': stability_score,
+            'stability_rating': rate_stability(stability_score),
+            'window_sensitivity': window_sensitivity,
+            'sensitivity_rating': rate_sensitivity(window_sensitivity),
+            'plateau_width_pct': plateau_width,
+            'plateau_rating': rate_plateau(plateau_width),
+            'coef_of_variation': coef_of_variation,
+            'cov_rating': rate_cov(coef_of_variation),
+            'temporal_consistency': temporal_consistency,
+            'windows_tested': len(windows),
+            'min_window': min_window,
+            'max_window': max_window
+        }

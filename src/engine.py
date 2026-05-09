@@ -22,9 +22,9 @@ import yaml
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from data import DataEngine
-from fundamentals import FundamentalEngine
-from analytics import AnalyticsEngine
+from src.data import DataEngine
+
+from src.analytics import AnalyticsEngine
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -45,7 +45,7 @@ class BacktestEngine:
     
     def __init__(self) -> None:
         self.data_engine = DataEngine()
-        self.fundamental_engine: Optional[FundamentalEngine] = None
+
         self.configs: list[dict] = []
         self.overrides: dict = {}
         self.data: Optional[DataFrame] = None
@@ -323,6 +323,65 @@ class BacktestEngine:
         if not self.results:
             return
         self.results.display()
+        
+        # Print Robustness Metrics for each portfolio
+        self._print_robustness_metrics()
+
+    def _print_robustness_metrics(self) -> None:
+        """Prints robustness metrics summary for all portfolio strategies."""
+        if self.data is None or self.results is None:
+            return
+        
+        # Get portfolio names (exclude benchmarks)
+        portfolio_names = [cfg['_name'] for cfg in self.configs]
+        benchmarks: set[str] = set()
+        if self.overrides.get('benchmarks'):
+            benchmarks.update(self.overrides['benchmarks'])
+        else:
+            for cfg in self.configs:
+                benchmarks.update(cfg['settings'].get('benchmarks', []))
+        
+        strategies_to_analyze = [
+            name for name in self.results.prices.columns 
+            if name in portfolio_names
+        ]
+        
+        if not strategies_to_analyze:
+            return
+        
+        print("\n" + "=" * 80)
+        print("ROBUSTNESS METRICS SUMMARY")
+        print("=" * 80)
+        print("Tests Sharpe Ratio stability across rolling windows (20-252 days)")
+        print("-" * 80)
+        
+        for strategy in strategies_to_analyze:
+            metrics = AnalyticsEngine.get_robustness_metrics(
+                self.results.prices, strategy
+            )
+            
+            if 'error' in metrics:
+                print(f"\n{strategy}: {metrics['error']}")
+                continue
+            
+            print(f"\n┌─ {strategy} {'─' * (75 - len(strategy))}")
+            print(f"│  Mean Sharpe:          {metrics['mean_sharpe']:>8.2f}")
+            print(f"│  StdDev Sharpe:        {metrics['std_sharpe']:>8.2f}")
+            print(f"├────────────────────────────────────────────────────────────────")
+            print(f"│  Stability Score:      {metrics['stability_score']:>8.2f}  ({metrics['stability_rating']})")
+            print(f"│  Window Sensitivity:   {metrics['window_sensitivity']:>8.3f}  ({metrics['sensitivity_rating']})")
+            print(f"│  Plateau Width (>1.0): {metrics['plateau_width_pct']:>7.1f}%  ({metrics['plateau_rating']})")
+            print(f"│  Coef. of Variation:   {metrics['coef_of_variation']:>8.2f}  ({metrics['cov_rating']})")
+            print(f"│  Temporal Consistency: {metrics['temporal_consistency']:>8.2f}")
+            print(f"└─ Windows tested: {metrics['windows_tested']} ({metrics['min_window']}-{metrics['max_window']} days)")
+        
+        print("\n" + "-" * 80)
+        print("Interpretation:")
+        print("  • Stability Score: Higher = more robust (>2.0 Excellent, >1.5 Good)")
+        print("  • Window Sensitivity: Lower = less sensitive (<0.05 Low, <0.15 Moderate)")
+        print("  • Plateau Width: Wider = robust across parameters (>80% Excellent)")
+        print("  • CoV: Lower = more consistent (<0.3 Excellent, <0.5 Good)")
+        print("=" * 80 + "\n")
 
     def plot_all(self) -> None:
         """Displays all visualizations using PlotOrchestrator."""
@@ -339,7 +398,7 @@ class BacktestEngine:
             return
         
         # Delegate to PlotOrchestrator
-        from plot_orchestrator import PlotOrchestrator
+        from src.plot_orchestrator import PlotOrchestrator
         
         assert self.data is not None
         assert self.metadata is not None
@@ -378,8 +437,8 @@ class BacktestEngine:
     def _get_graph_selection(self) -> Optional[dict]:
         """Shows the graph selector GUI and returns selection."""
         try:
-            from gui import GraphSelector
-            from plot_orchestrator import PlotOrchestrator
+            from src.gui import GraphSelector
+            from src.plot_orchestrator import PlotOrchestrator
             
             strategies = [cfg['_name'] for cfg in self.configs]
             benchmarks: set[str] = set()
@@ -407,7 +466,7 @@ class BacktestEngine:
         window_months: int = 6
     ) -> tuple[list, Optional[pd.DatetimeIndex], Optional[DataFrame]]:
         """Precomputes TDA results and returns them."""
-        from tda_engine import TDAManager
+        from src.tda_engine import TDAManager
         import numpy as np
 
         # Setup Parameters
@@ -488,7 +547,7 @@ class BacktestEngine:
         window_months: int = 6
     ) -> None:
         """Launches the interactive TDA explorer."""
-        from interactive_tda import TDAExplorer
+        from src.interactive_tda import TDAExplorer
         
         results, dates, spy_ohlc = self.get_tda_results(start_date, end_date, window_months)
         if not results:

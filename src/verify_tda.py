@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from data import DataEngine
-from tda_engine import TDAManager
-import visualization as viz
+from src.data import DataEngine
+from src.tda_engine import TDAManager
+import src.visualization as viz
 
 def main():
     # 1. Load Data

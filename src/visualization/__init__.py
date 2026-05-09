@@ -14,12 +14,12 @@ All public functions are re-exported from this module for backward compatibility
 from __future__ import annotations
 
 # Re-export all public functions for backward compatibility
-from visualization.cursor import (
+from src.visualization.cursor import (
     FinancialCursor,
     add_financial_cursor,
     make_legend_interactive,
 )
-from visualization.rolling import (
+from src.visualization.rolling import (
     plot_drawdowns,
     plot_rolling_volatility,
     plot_rolling_sharpe,
@@ -29,7 +29,7 @@ from visualization.rolling import (
     plot_rolling_alpha_beta,
     plot_rolling_info_ratio,
 )
-from visualization.static import (
+from src.visualization.static import (
     plot_return_distribution,
     plot_upside_downside_capture,
     plot_correlation_matrix,
@@ -37,16 +37,16 @@ from visualization.static import (
     plot_return_attribution,
     plot_valuation_comparison,
 )
-from visualization.heatmaps import (
+from src.visualization.heatmaps import (
     plot_monthly_returns_heatmap,
     plot_grouped_correlation_matrix,
 )
-from visualization.surfaces import (
+from src.visualization.surfaces import (
     plot_sharpe_robustness_surface,
     plot_drawdown_recovery_surface,
     plot_historical_pe_trend,
 )
-from visualization.tda import (
+from src.visualization.tda import (
     plot_persistence_diagram,
     plot_persistence_barcode,
     plot_tda_metrics_trend,
