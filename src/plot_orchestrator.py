@@ -162,16 +162,25 @@ class PlotOrchestrator:
             viz.plot_correlation_matrix(self.results)
         
         if is_sel("Upside/Downside Capture"):
-            viz.plot_upside_downside_capture(self.results, benchmark=primary_benchmark)
+            if primary_benchmark in self.results.prices.columns:
+                viz.plot_upside_downside_capture(self.results, benchmark=primary_benchmark)
+            else:
+                logger.warning(f"Benchmark {primary_benchmark} not available for Upside/Downside Capture.")
         if is_sel("Rolling Info Ratio"):
-            viz.plot_rolling_info_ratio(self.results, benchmark=primary_benchmark)
+            if primary_benchmark in self.results.prices.columns:
+                viz.plot_rolling_info_ratio(self.results, benchmark=primary_benchmark)
+            else:
+                logger.warning(f"Benchmark {primary_benchmark} not available for Rolling Info Ratio.")
         
         if is_sel("Rolling Alpha/Beta"):
-            viz.plot_rolling_alpha_beta(
-                self.results.prices[[cfg['_name'] for cfg in self.configs]],
-                self.results.prices[[primary_benchmark]],
-                title_prefix=f"Strategies vs {primary_benchmark}"
-            )
+            if primary_benchmark in self.results.prices.columns:
+                viz.plot_rolling_alpha_beta(
+                    self.results.prices[[cfg['_name'] for cfg in self.configs]],
+                    self.results.prices[[primary_benchmark]],
+                    title_prefix=f"Strategies vs {primary_benchmark}"
+                )
+            else:
+                logger.warning(f"Benchmark {primary_benchmark} not available for Rolling Alpha/Beta plot.")
         
         if is_sel("Global Sector Correlation"):
             viz.plot_grouped_correlation_matrix(

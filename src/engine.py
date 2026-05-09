@@ -211,6 +211,8 @@ class BacktestEngine:
                     bt.algos.Rebalance()
                 ])
                 backtests.append(bt.Backtest(s, self.data))
+            else:
+                logger.warning(f"Benchmark {bench} not available in data. Skipping.")
 
         logger.info(f"Running {len(backtests)} backtests...")
         self.results = bt.run(*backtests)

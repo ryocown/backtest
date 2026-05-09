@@ -16,7 +16,7 @@ class DataEngine:
     """Handles fetching and caching of historical stock data and metadata."""
     
     def __init__(self, cache_dir='data_cache'):
-        self.cache_dir = os.path.join(os.path.dirname(__file__), cache_dir)
+        self.cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), cache_dir)
         os.makedirs(self.cache_dir, exist_ok=True)
         self.metadata_path = os.path.join(self.cache_dir, "metadata.json")
         self.metadata = self._load_json(self.metadata_path, default={})
@@ -318,9 +318,12 @@ class DataEngine:
     
     @staticmethod
     def _ensure_tz_naive(df):
-        """Ensures DataFrame index is timezone-naive."""
-        if hasattr(df, 'index') and isinstance(df.index, pd.DatetimeIndex) and df.index.tz is not None:
-            df.index = df.index.tz_localize(None)
+        """Ensures DataFrame index is timezone-naive and normalized (no time)."""
+        if hasattr(df, 'index') and isinstance(df.index, pd.DatetimeIndex):
+            if df.index.tz is not None:
+                logger.info(f"Removing timezone {df.index.tz} from DataFrame")
+                df.index = df.index.tz_localize(None)
+            df.index = df.index.normalize()
         return df
 
     @staticmethod
