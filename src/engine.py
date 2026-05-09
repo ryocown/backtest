@@ -562,7 +562,7 @@ class BacktestEngine:
         tda_params: Optional[dict] = None
     ) -> None:
         """Exports all results to a web-ready JSON package."""
-        from web_export import export_to_web
+        from src.web_export import export_to_web
         
         tda_results = None
         if tda_params:

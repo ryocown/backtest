@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 from datetime import datetime
-from analytics import AnalyticsEngine
+from src.analytics import AnalyticsEngine
 try:
     from persim import PersLandscapeApprox
 except ImportError:

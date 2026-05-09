@@ -177,7 +177,7 @@ class DataEngine:
             return None
             
         # Standardize columns to lowercase to match Alpaca ('close', etc.)
-        df.columns = [c.lower() for c in df.columns]
+        df.columns = [c[0].lower() if isinstance(c, tuple) else c.lower() for c in df.columns]
         return self._ensure_tz_naive(df)
 
     # -------------------------------------------------------------------------
@@ -319,7 +319,7 @@ class DataEngine:
     @staticmethod
     def _ensure_tz_naive(df):
         """Ensures DataFrame index is timezone-naive."""
-        if hasattr(df, 'index') and df.index.tz is not None:
+        if hasattr(df, 'index') and isinstance(df.index, pd.DatetimeIndex) and df.index.tz is not None:
             df.index = df.index.tz_localize(None)
         return df
 
