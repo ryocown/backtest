@@ -210,4 +210,5 @@ __marimo__/
 
 # Project specific ignores
 src/data_cache/
+data_cache/
 screenshots/
