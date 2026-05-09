@@ -275,6 +275,7 @@ def plot_valuation_comparison(res, metadata: dict, title: str = "Portfolio Valua
 
 
 def plot_sectoral_allocation(results, strategy_name, metadata, custom_sector_map):
+    """Plots sector allocation over time as stacked area chart."""
     weights = results.get_security_weights(strategy_name)
     sector_map = {
         t: (custom_sector_map.get(t) if custom_sector_map else None)
@@ -294,6 +295,12 @@ def plot_sectoral_allocation(results, strategy_name, metadata, custom_sector_map
 
 
 def plot_risk_contribution_breakdown(strategy_name, config, data):
+    """
+    Plots risk contribution breakdown for a portfolio.
+    
+    Shows which holdings contribute most to portfolio volatility (MCTR analysis).
+    Only runs for portfolios (not benchmarks) since benchmarks are single tickers.
+    """
     import logging
     
     logger = logging.getLogger(__name__)

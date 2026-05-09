@@ -9,7 +9,6 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 import matplotlib.pyplot as plt
-from src.visualization.static import plot_sectoral_allocation, plot_risk_contribution_breakdown
 
 
 if TYPE_CHECKING:
@@ -262,10 +261,10 @@ class PlotOrchestrator:
                 viz.plot_drawdown_recovery_surface(self.results, name)
             
             if is_sel("Sectoral Allocation"):
-                plot_sectoral_allocation(self.results, name, self.metadata, custom_map)
+                viz.plot_sectoral_allocation(self.results, name, self.metadata, custom_map)
             
             if is_sel("Risk Contribution Breakdown"):
-                plot_risk_contribution_breakdown(name, cfg, self.data)
+                viz.plot_risk_contribution_breakdown(name, cfg, self.data)
 
     
 

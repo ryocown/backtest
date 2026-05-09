@@ -36,6 +36,8 @@ from src.visualization.static import (
     plot_risk_contribution,
     plot_return_attribution,
     plot_valuation_comparison,
+    plot_sectoral_allocation,
+    plot_risk_contribution_breakdown,
 )
 from src.visualization.heatmaps import (
     plot_monthly_returns_heatmap,
@@ -74,6 +76,8 @@ __all__ = [
     "plot_risk_contribution",
     "plot_return_attribution",
     "plot_valuation_comparison",
+    "plot_sectoral_allocation",
+    "plot_risk_contribution_breakdown",
     # Heatmaps
     "plot_monthly_returns_heatmap",
     "plot_grouped_correlation_matrix",
