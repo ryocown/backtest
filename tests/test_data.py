@@ -5,7 +5,7 @@ import os
 from unittest.mock import patch, MagicMock
 import pandas as pd
 import pytest
-from data import DataEngine
+from src.data import DataEngine
 
 @pytest.fixture
 def temp_cache_dir(tmp_path):
@@ -25,7 +25,7 @@ class TestDataEngine:
         assert os.path.exists(temp_cache_dir)
         assert engine.cache_dir == temp_cache_dir
 
-    @patch('data.StockHistoricalDataClient')
+    @patch('src.data.StockHistoricalDataClient')
     def test_get_ticker_ohlc_cache_miss(self, mock_alpaca, temp_cache_dir):
         """Test cache miss calls API."""
         # Setup mock for Alpaca

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from analytics import AnalyticsEngine
+from src.analytics import AnalyticsEngine
 
 
 class TestDrawdowns:

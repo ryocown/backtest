@@ -50,7 +50,7 @@ class TestRollingPlots:
     @patch('matplotlib.pyplot.show')
     def test_plot_drawdowns(self, mock_show, mock_result):
         """Test drawdown plot executes without error."""
-        from visualization.rolling import plot_drawdowns
+        from src.visualization.rolling import plot_drawdowns
         
         plot_drawdowns(mock_result)
         # No assertion needed - we just verify no exception
@@ -58,14 +58,14 @@ class TestRollingPlots:
     @patch('matplotlib.pyplot.show')
     def test_plot_rolling_volatility(self, mock_show, mock_result):
         """Test rolling volatility plot executes without error."""
-        from visualization.rolling import plot_rolling_volatility
+        from src.visualization.rolling import plot_rolling_volatility
         
         plot_rolling_volatility(mock_result, window=20)
     
     @patch('matplotlib.pyplot.show')
     def test_plot_rolling_sharpe(self, mock_show, mock_result):
         """Test rolling Sharpe plot executes without error."""
-        from visualization.rolling import plot_rolling_sharpe
+        from src.visualization.rolling import plot_rolling_sharpe
         
         plot_rolling_sharpe(mock_result, window=20)
 
@@ -76,14 +76,14 @@ class TestStaticPlots:
     @patch('matplotlib.pyplot.show')
     def test_plot_return_distribution(self, mock_show, mock_result):
         """Test return distribution plot executes without error."""
-        from visualization.static import plot_return_distribution
+        from src.visualization.static import plot_return_distribution
         
         plot_return_distribution(mock_result)
     
     @patch('matplotlib.pyplot.show')
     def test_plot_correlation_matrix(self, mock_show, mock_result):
         """Test correlation matrix plot executes without error."""
-        from visualization.static import plot_correlation_matrix
+        from src.visualization.static import plot_correlation_matrix
         
         plot_correlation_matrix(mock_result)
 
@@ -94,14 +94,14 @@ class TestHeatmapPlots:
     @patch('matplotlib.pyplot.show')
     def test_plot_monthly_returns_heatmap(self, mock_show, mock_result):
         """Test monthly returns heatmap executes without error."""
-        from visualization.heatmaps import plot_monthly_returns_heatmap
+        from src.visualization.heatmaps import plot_monthly_returns_heatmap
         
         plot_monthly_returns_heatmap(mock_result, 'StrategyA')
     
     @patch('matplotlib.pyplot.show')
     def test_plot_grouped_correlation_matrix(self, mock_show, sample_asset_prices):
         """Test grouped correlation matrix executes without error."""
-        from visualization.heatmaps import plot_grouped_correlation_matrix
+        from src.visualization.heatmaps import plot_grouped_correlation_matrix
         
         group_map = {
             'AAPL': 'Tech',
@@ -119,7 +119,7 @@ class TestCursor:
     @patch('matplotlib.pyplot.gcf')
     def test_add_financial_cursor(self, mock_gcf):
         """Test financial cursor attachment."""
-        from visualization.cursor import add_financial_cursor
+        from src.visualization.cursor import add_financial_cursor
         
         # Create a mock figure
         mock_fig = MagicMock()
