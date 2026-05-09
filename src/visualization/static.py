@@ -275,9 +275,6 @@ def plot_valuation_comparison(res, metadata: dict, title: str = "Portfolio Valua
 
 
 def plot_sectoral_allocation(results, strategy_name, metadata, custom_sector_map):
-    import matplotlib.pyplot as plt
-    import src.visualization as viz
-    
     weights = results.get_security_weights(strategy_name)
     sector_map = {
         t: (custom_sector_map.get(t) if custom_sector_map else None)
@@ -293,13 +290,10 @@ def plot_sectoral_allocation(results, strategy_name, metadata, custom_sector_map
     ax.set_ylabel("Weight")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     plt.tight_layout()
-    viz.make_legend_interactive(plt.gcf())
+    make_legend_interactive(plt.gcf())
 
 
 def plot_risk_contribution_breakdown(strategy_name, config, data):
-    import numpy as np
-    import pandas as pd
-    import matplotlib.pyplot as plt
     import logging
     
     logger = logging.getLogger(__name__)
